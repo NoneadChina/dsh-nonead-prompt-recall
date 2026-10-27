@@ -1,0 +1,51 @@
+{
+  "name": "dsh-nonead-prompt-recall",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness 插件：输入框为空时按 ↑ 召回上一条提示词、再按 ↑ 继续向前，↓ 向回；按工作区持久保存，重启后仍可用。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "scripts": {
+    "build:client": "node scripts/build-client.mjs",
+    "test": "node scripts/build-client.mjs && node --test --test-isolation=none \"test/*.test.mjs\"",
+    "check": "node --check lib/index.js && npm test"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "cordis",
+    "prompt-history",
+    "prompt-recall",
+    "composer"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "UNLICENSED",
+  "author": {
+    "name": "拓德科技 (Suzhou Nonead Robot Technology Co., Ltd.)",
+    "url": "https://www.nonead.com"
+  }
+}
