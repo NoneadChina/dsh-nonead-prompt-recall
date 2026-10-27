@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Prompt Recall",
+    "description": "Composer history for DeepSeek Harness: press ↑ in an empty input box to recall the previous prompt, ↑ again for older ones, ↓ to walk back; stored per workspace and survives restarts. Manage capture, caps, retention and export/import with /prompt-recall or Settings → Prompt History."
+  }
+}

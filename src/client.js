@@ -14,16 +14,15 @@
  * `core.js`) into the `window.__ModuleLoader__` bundle at `lib/client.js`.
  */
 
-import { decideNav } from './core.js';
+import { decideNav, draftText } from './core.js';
+import { CHANNEL, COMPOSER_SELECTOR } from './protocol.js';
+import { registerSettingsSection } from './settings.js';
 
 export const name = 'dsh-nonead-prompt-recall';
-export const inject = ['sessions'];
+export const inject = ['sessions', 'slots', 'locale', 'connection'];
 
-/** Host RPC channel (absolute path; must match RPC_CHANNEL in lib/index.js). */
-const CHANNEL = '/dsh-nonead-prompt-recall';
-
-/** The composer's contenteditable (harness-owned DOM marker). */
-const COMPOSER_SELECTOR = '[data-composer-input]';
+/** How long programmatic draft writes suppress the input-reset listener. */
+const PROGRAMMATIC_GRACE_MS = 250;
 
 /** Text fields the harness uses to expose the semantic draft. */
 function projectionText(shell) {
@@ -46,7 +45,15 @@ export function apply(ctx) {
   const doc = typeof document === 'undefined' ? undefined : document;
   if (doc === undefined || doc === null) return;
 
-  const state = { el: null, index: -1, entry: '', list: null, sessionId: '' };
+  /**
+   * Navigation state for the composer currently being driven.
+   * `entry` is the *effective* text after the composer normalized it, which is
+   * what the next ↑/↓ must compare against.
+   */
+  const state = { el: null, index: -1, entry: '', list: null, sessionId: '', shell: null };
+  /** Number of ↑ presses waiting for a first history fetch. */
+  let pendingUp = 0;
+  /** Bumped to invalidate an in-flight fetch (new press, typing, focus move). */
   let fetchSeq = 0;
   let programmaticUntil = 0;
 
@@ -88,11 +95,6 @@ export function apply(ctx) {
   };
 
   /**
-   * Resolve the composer facade whose editor owns `el`.
-   * @param {HTMLElement} el - focused composer contenteditable.
-   * @returns {{shell: any, sessionId: string, cwd: string} | null}
-   */
-  /**
    * Resolve one session's composer facade.
    * `shell(id)` is the id-addressed route; `for(sessionScope)` is the older
    * scope-addressed route kept as a fallback for host versions without it.
@@ -116,6 +118,11 @@ export function apply(ctx) {
     return null;
   };
 
+  /**
+   * Resolve the composer facade whose editor owns `el`.
+   * @param {HTMLElement} el - focused composer contenteditable.
+   * @returns {{shell: any, sessionId: string, cwd: string} | null}
+   */
   const resolveComposer = (el) => {
     const input = service('conversation')?.input;
     if (input === null || input === undefined) return null;
@@ -141,8 +148,13 @@ export function apply(ctx) {
     return typeof el?.textContent === 'string' ? el.textContent : '';
   };
 
-  const writeDraft = (shell, entry) => {
-    programmaticUntil = Date.now() + 250;
+  /**
+   * Write one draft through the composer facade and remember the text the
+   * composer actually produced (it may strip reference placeholders).
+   * @returns {string} the effective draft text.
+   */
+  const writeDraft = (el, shell, entry, index) => {
+    programmaticUntil = Date.now() + PROGRAMMATIC_GRACE_MS;
     try {
       shell.setDraft(entry);
     } catch {
@@ -157,6 +169,11 @@ export function apply(ctx) {
     } catch {
       /* focus is best-effort */
     }
+    const effective = textOf(el, shell);
+    state.entry = effective;
+    state.index = index;
+    state.shell = shell;
+    return effective;
   };
 
   const fetchHistory = async ({ sessionId, cwd }) => {
@@ -192,44 +209,56 @@ export function apply(ctx) {
     const text = textOf(el, resolved.shell);
 
     // First ↑ in an empty composer: fetch the newest list, then fill.
-    // The default caret move inside an empty composer is harmless, so the
-    // event is not swallowed while the (local, single-digit-millisecond) RPC runs.
+    // Every press before the list arrives counts, so two quick ↑ presses land
+    // two entries back instead of collapsing into one. The default caret move
+    // inside an empty composer is harmless, so the event is not swallowed.
     if (key === 'ArrowUp' && text.trim() === '') {
+      pendingUp += 1;
+      const steps = pendingUp;
       const token = ++fetchSeq;
       void fetchHistory(resolved).then((list) => {
-        if (token !== fetchSeq || list === null || list.length === 0) return;
-        if (textOf(el, resolved.shell).trim() !== '') return; // user typed meanwhile
+        if (token !== fetchSeq) return; // superseded by a newer press or by typing
+        if (state.el !== null && state.el !== el) return; // focus moved to another composer
+        if (draftText(textOf(el, resolved.shell)).trim() !== '') {
+          pendingUp = 0;
+          return; // user typed meanwhile
+        }
+        pendingUp = 0;
+        if (list === null || list.length === 0) return;
+        const target = Math.min(steps, list.length) - 1;
         state.el = el;
-        state.index = 0;
-        state.entry = list[0];
-        state.list = list;
         state.sessionId = resolved.sessionId;
-        writeDraft(resolved.shell, list[0]);
+        state.list = list;
+        writeDraft(el, resolved.shell, list[target], target);
       });
       return;
     }
 
     if (state.el !== el || state.sessionId !== resolved.sessionId || !Array.isArray(state.list)) return;
-    const decision = decideNav(key, text, state.list, state.index);
+    const decision = decideNav(key, text, state.list, state.index, state.entry);
     if (decision.handled !== true) return;
 
     event.preventDefault();
     if (typeof event.stopPropagation === 'function') event.stopPropagation();
 
-    state.index = decision.index;
-    state.entry = decision.entry;
-    writeDraft(resolved.shell, decision.entry);
+    pendingUp = 0;
+    writeDraft(el, resolved.shell, decision.entry, decision.index);
   };
 
   const onInput = (event) => {
     if (Date.now() < programmaticUntil) return;
     const el = event?.target;
     if (el === null || typeof el?.matches !== 'function' || !el.matches(COMPOSER_SELECTOR)) return;
+
+    // Real typing means a pending first-↑ fetch must not overwrite it — even
+    // before the first fetch resolved and `state.el` was recorded.
+    pendingUp = 0;
+    fetchSeq += 1;
     if (state.el !== el) return;
     if (state.index < 0 && state.entry === '') return; // not browsing history
-    const resolved = resolveComposer(el);
-    const text = textOf(el, resolved?.shell);
-    if (text !== state.entry) {
+
+    const shell = state.shell ?? resolveComposer(el)?.shell;
+    if (draftText(textOf(el, shell)) !== draftText(state.entry)) {
       state.index = -1;
       state.entry = '';
     }
@@ -239,17 +268,28 @@ export function apply(ctx) {
     const el = event?.target;
     if (el === null || typeof el?.matches !== 'function' || !el.matches(COMPOSER_SELECTOR)) return;
     if (state.el !== el) {
+      pendingUp = 0;
+      fetchSeq += 1;
       state.el = el;
       state.index = -1;
       state.entry = '';
       state.list = null;
       state.sessionId = '';
+      state.shell = null;
     }
   };
 
   doc.addEventListener('keydown', onKeyDown, true);
   doc.addEventListener('input', onInput, true);
   doc.addEventListener('focusin', onFocusIn, true);
+
+  // Settings page (settings.section slot). Optional: headless/test contexts
+  // without a slots service simply skip it.
+  try {
+    registerSettingsSection(ctx);
+  } catch {
+    /* the keyboard bridge must keep working even if the settings page fails */
+  }
 
   const dispose = () => {
     doc.removeEventListener('keydown', onKeyDown, true);

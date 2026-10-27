@@ -3,3 +3,4 @@ node_modules/
 *.log
 *.tmp
 .dsh-project-memory/
+*.tgz

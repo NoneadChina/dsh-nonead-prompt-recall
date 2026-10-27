@@ -2,8 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -72,15 +71,17 @@ function keyEvent(key, target) {
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-function makeShell(el, calls) {
+function makeShell(el, calls, options = {}) {
+  const transform = options.transform ?? ((text) => text);
   return {
     editor: { getRootElement: () => el },
     get projection() {
       return { clipboardText: el.textContent };
     },
     setDraft(text) {
-      el.textContent = text;
-      calls.push(text);
+      const effective = transform(text);
+      el.textContent = effective;
+      calls.push(effective);
     },
     focus() {
       el.focused = true;
@@ -88,7 +89,7 @@ function makeShell(el, calls) {
   };
 }
 
-function makeCtx({ el, shell, entries }) {
+function makeCtx({ el, shell, entries, call }) {
   const sessions = {
     list: {
       getSnapshot: () => ({
@@ -100,16 +101,13 @@ function makeCtx({ el, shell, entries }) {
     },
   };
   const conversation = { input: { shell: (id) => { if (id !== 's1') throw new Error('unknown'); return shell; } } };
-  const connection = {
-    rpc: {
-      call: async (channel, endpoint, payload) => {
-        assert.equal(channel, '/dsh-nonead-prompt-recall');
-        assert.equal(endpoint, 'history');
-        assert.equal(payload.cwd, 'D:/Work/Demo');
-        return { ok: true, value: { entries: entries.map((text) => ({ text, at: 1 })) } };
-      },
-    },
+  const defaultCall = async (channel, endpoint, payload) => {
+    assert.equal(channel, '/dsh-nonead-prompt-recall');
+    assert.equal(endpoint, 'history');
+    assert.equal(payload.cwd, 'D:/Work/Demo');
+    return { ok: true, value: { entries: entries.map((text) => ({ text, at: 1 })) } };
   };
+  const connection = { rpc: { call: call ?? defaultCall } };
   const ctx = {
     get(key) {
       if (key === 'sessions') return sessions;
@@ -170,7 +168,7 @@ test('↑ recalls history newest-first, ↓ walks back, typed drafts are untouch
   assert.equal(second.defaultPrevented, true);
   assert.equal(el.textContent, '中间');
 
-  // ↑ at the oldest: not handled, no draft write.
+  // ↑ at the oldest: the last step is handled, then no further entry exists.
   const third = keyEvent('ArrowUp', el);
   doc.emit('keydown', third);
   assert.equal(third.defaultPrevented, true);
@@ -199,6 +197,84 @@ test('↑ recalls history newest-first, ↓ walks back, typed drafts are untouch
   const down = keyEvent('ArrowDown', el);
   doc.emit('keydown', down);
   assert.equal(down.defaultPrevented, false);
+});
+
+test('two quick ↑ presses before the fetch resolves walk two entries', async () => {
+  const doc = new FakeDocument();
+  globalThis.document = doc;
+  const bundle = await loadBundle();
+
+  const el = new FakeElement();
+  const calls = [];
+  const shell = makeShell(el, calls);
+  const { ctx } = makeCtx({ el, shell, entries: ['最新', '中间', '最早'] });
+  bundle.apply(ctx);
+  doc.emit('focusin', { target: el });
+
+  doc.emit('keydown', keyEvent('ArrowUp', el));
+  doc.emit('keydown', keyEvent('ArrowUp', el));
+  await tick();
+
+  assert.equal(el.textContent, '中间');
+  assert.deepEqual(calls, ['中间']);
+});
+
+test('typing while the first fetch is in flight cancels the fill', async () => {
+  const doc = new FakeDocument();
+  globalThis.document = doc;
+  const bundle = await loadBundle();
+
+  const el = new FakeElement();
+  const calls = [];
+  const shell = makeShell(el, calls);
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  const { ctx } = makeCtx({
+    el,
+    shell,
+    entries: ['最新'],
+    call: async () => {
+      await gate;
+      return { ok: true, value: { entries: [{ text: '最新', at: 1 }] } };
+    },
+  });
+  bundle.apply(ctx);
+  doc.emit('focusin', { target: el });
+
+  doc.emit('keydown', keyEvent('ArrowUp', el));
+  el.textContent = 'typed while loading';
+  doc.emit('input', { target: el });
+  release();
+  await tick();
+
+  assert.deepEqual(calls, []);
+  assert.equal(el.textContent, 'typed while loading');
+});
+
+test('a composer-normalized draft still walks further back', async () => {
+  const doc = new FakeDocument();
+  globalThis.document = doc;
+  const bundle = await loadBundle();
+
+  const el = new FakeElement();
+  const calls = [];
+  // Simulate `setDraft` stripping an `@reference` token, like the real composer.
+  const shell = makeShell(el, calls, { transform: (text) => text.replace(/ @\w+/gu, '') });
+  const { ctx } = makeCtx({ el, shell, entries: ['hello @file', 'older'] });
+  bundle.apply(ctx);
+  doc.emit('focusin', { target: el });
+
+  doc.emit('keydown', keyEvent('ArrowUp', el));
+  await tick();
+  assert.equal(el.textContent, 'hello');
+
+  const second = keyEvent('ArrowUp', el);
+  doc.emit('keydown', second);
+  assert.equal(second.defaultPrevented, true);
+  assert.equal(el.textContent, 'older');
+  assert.deepEqual(calls, ['hello', 'older']);
 });
 
 test('non-composer targets and plain modifiers are ignored', async () => {

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { decideNav } from '../src/core.js';
+import { decideNav, draftText } from '../src/core.js';
 
 const HISTORY = ['最新', '中间', '最早'];
 
@@ -38,4 +38,19 @@ test('multi-line entries compare exactly', () => {
   const history = ['第一行\n第二行', '旧'];
   assert.deepEqual(decideNav('ArrowUp', '第一行\n第二行', history, 0), { handled: true, index: 1, entry: '旧' });
   assert.deepEqual(decideNav('ArrowDown', '旧', history, 1), { handled: true, index: 0, entry: '第一行\n第二行' });
+});
+
+test('the effective (composer-normalized) entry drives the walk', () => {
+  // The composer stripped an `@file` reference when writing the draft back.
+  const history = ['hello @file', 'older'];
+  assert.deepEqual(decideNav('ArrowUp', 'hello', history, 0, 'hello'), { handled: true, index: 1, entry: 'older' });
+  assert.deepEqual(decideNav('ArrowDown', 'hello', history, 0, 'hello'), { handled: true, index: -1, entry: '' });
+  // A draft that does not match the effective entry is left alone.
+  assert.deepEqual(decideNav('ArrowUp', 'hello there', history, 0, 'hello'), { handled: false });
+});
+
+test('draftText only normalizes line endings', () => {
+  assert.equal(draftText('a\r\nb'), 'a\nb');
+  assert.equal(draftText('  a  '), '  a  ');
+  assert.equal(draftText(undefined), '');
 });

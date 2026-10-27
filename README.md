@@ -1,75 +1,118 @@
 # dsh-nonead-prompt-recall
 
-DeepSeek Harness 插件：给输入框加上 shell 风格的**提示词历史召回**。
+**English** | [简体中文](README.zh.md)
 
-- 输入框为空时按 **↑**：载入上一条提交过的提示词；
-- 再按 **↑**：继续向前载入更早的一条；
-- 按 **↓**：向回走，最后回到当前空白草稿；
-- 历史按**工作区**隔离并持久化到磁盘，关闭 DSH Desktop、重启后仍然可用；
-- 手动输入内容时 ↑/↓ 恢复普通光标行为，不会误触。
+A DeepSeek Harness plugin that gives the composer shell-style **prompt history recall**.
 
-## 行为细节
+Current version: **0.6.1**.
 
-| 场景 | ↑ | ↓ |
+- Press **↑** in an empty composer to load the last prompt you sent;
+- press **↑** again to walk further back;
+- press **↓** to walk forward and finally return to the empty draft;
+- history is isolated **per workspace**, persisted on disk, and survives a DSH Desktop restart;
+- once you type or edit, ↑/↓ behave like normal caret movement.
+
+## Contents
+
+- [Behavior](#behavior) · [Install](#install) · [Verify](#verify) · [Settings page](#settings-page)
+- [Commands](#commands) · [Data layout](#data-layout) · [Architecture](#architecture) · [Localization](#localization)
+- [Development](#development) · [Documentation](#documentation) · [Compatibility](#compatibility)
+
+## Behavior
+
+| Situation | ↑ | ↓ |
 | --- | --- | --- |
-| 输入框为空 | 载入历史第 1 条（最新） | 不拦截 |
-| 正在浏览历史（未编辑） | 载入更早一条 | 载入更新一条 / 回到空白 |
-| 手动输入/编辑过 | 不拦截，正常移动光标 | 不拦截 |
-| 历史为空 | 不拦截 | 不拦截 |
+| Empty composer | load history #1 (newest) | not intercepted |
+| Browsing history (unedited) | load an older prompt | load a newer prompt / return to the empty draft |
+| Hand-typed or edited draft | not intercepted, normal caret movement | not intercepted |
+| Empty history | not intercepted | not intercepted |
 
-- 连续两次提交完全相同的提示词只保留一条（避免连按 ↑ 一直停在同一条）。
-- 单条提示词最长保存 32000 字符；每个工作区最多 500 条。
-- 只记录**真人输入**：插件注入、续接仪式、工具调用等来源不会进入历史。
+- Two consecutive identical submissions are stored once (so holding ↑ does not get stuck on one entry).
+- One prompt is capped at 32,000 characters; one workspace keeps at most 500 entries.
+- Only **human input** is recorded: plugin injections, continuation rituals and tool-sourced messages never enter the history.
+- The composer may normalize a draft (for example `@reference` targets are stripped); the next ↑/↓ compares against the *effective* text, so walking back keeps working after such a fill.
 
-## 安装
+## Install
 
-### 方式 A：插件页安装（`desktop` profile 只能走这里）
+### Option A: plugin page (the `desktop` profile can only use this)
 
-在 DSH Desktop 的插件页面选择**安装 → 本地目录**，填入：
+In DSH Desktop open the Plugins page, choose **Add plugin → local directory**, and enter:
 
 ```
 D:/MyProgram/GitLab/dsh-nonead-prompt-recall
 ```
 
-`desktop` profile 由 Electron 应用独占管理，命令行安装会被明确拒绝：
+The `desktop` profile is owned exclusively by the Electron app; CLI installs are rejected:
 
 ```
 error: profile "desktop" is managed exclusively by the Electron application
 ```
 
-安装完成后刷新页面（或重启 DSH Desktop），让浏览器端 bundle 生效。
+Refresh the page (or restart DSH Desktop) afterwards so the browser bundle loads.
 
-### 方式 B：其他 profile（命令行）
+### Option B: other profiles (CLI)
 
 ```powershell
 dsh plugin --profile <profile-name> add "file:D:/MyProgram/GitLab/dsh-nonead-prompt-recall"
 ```
 
-## 验证
+## Verify
 
-1. 在任意工作区发送一条提示词（例如 `测试提示词 1`）；
-2. 清空输入框，按 **↑**：输入框应出现 `测试提示词 1`；
-3. 再发一条不同的提示词，清空后连按 **↑**：应依次出现最近的提示词；
-4. 按 **↓** 逐条回退，最后回到空白；
-5. 完全退出并重启 DSH Desktop，再按 **↑**：历史仍在。
+1. Send a prompt in any workspace (for example `test prompt 1`);
+2. clear the composer and press **↑** — `test prompt 1` should appear;
+3. send another prompt, clear, then press **↑** twice — the recent prompts should appear in order;
+4. press **↓** to walk back to the empty draft;
+5. quit and restart DSH Desktop, then press **↑** again — the history is still there;
+6. open **Settings → 提示词历史** and confirm the history icon in the left navigation, the new header/status layout, and the export / import / clear actions.
 
-历史文件可直接检查：
-
-```
-<DSH_HOME>/plugin-data/dsh-nonead-prompt-recall/history/<workspace-key>.json
-```
-
-## 数据位置
+The history file can be inspected directly:
 
 ```
 <DSH_HOME>/plugin-data/dsh-nonead-prompt-recall/history/<workspace-key>.json
 ```
 
-- `workspace-key` = 规范化工作区路径的 SHA-256 前 24 位；
-- 文件内容为 `{ version, cwd, updatedAt, entries: [{ text, at, sessionId? }] }`，`entries` 新的在前；
-- 写入采用临时文件 + rename 原子替换；损坏文件会被改名为 `*.corrupt-<时间戳>` 后重新开始，不会卡住捕获。
+## Settings page
 
-## 架构
+Open **Settings → 提示词历史** (the row is localized; an English UI reads **Prompt History**). The row uses a history glyph instead of the generic gear, and the page is one scrollable surface:
+
+- **Header** — plugin icon, version badge and a refresh button;
+- **Status** — capture state, entry count, current workspace and storage path;
+- **Capture settings** — enable switch, per-workspace cap (1–5000 entries), retention days (0 = forever), with unit-suffixed inputs and Save / validation feedback;
+- **History** — export / import / clear sit above the recent list, so they stay reachable in a short window; the list shows the five newest prompts for the current workspace.
+
+Export downloads a timestamped JSON file through the browser. Import opens a file picker, parses the JSON in the page (8MB / 20,000-entry limits) and shows the file name, entry count, source workspace and the first five prompts before you confirm the merge.
+
+## Commands
+
+`/prompt-recall` manages capture settings and the stored history. Settings persist
+in `settings.json` next to the history files.
+
+| Subcommand | Effect |
+| --- | --- |
+| `status` / `help` | show capture state, caps, retention and the entry count of this workspace |
+| `on` / `off` | toggle capture (existing history is kept) |
+| `max <n>` | entries kept per workspace (1–5000) |
+| `keep <days>` | drop entries older than N days (0 = forever) |
+| `clear confirm` | delete this workspace's history |
+| `export` | write a JSON export under `plugin-data/<plugin>/exports/` |
+| `import <file>` | merge an exported file back (exact duplicates skipped) |
+| `reset` | restore the default settings |
+
+## Data layout
+
+```
+<DSH_HOME>/plugin-data/dsh-nonead-prompt-recall/
+├── history/<workspace-key>.json    # newest-first entries
+├── settings.json                   # capture toggle, caps, retention
+└── exports/<workspace-key>-<ts>.json
+```
+
+- `workspace-key` = the first 24 hex characters of the SHA-256 of the normalized workspace path;
+- the file is `{ version, cwd, updatedAt, entries: [{ text, at, sessionId? }] }` with newest entries first;
+- writes use a temporary file + atomic rename; a corrupt file is renamed to `*.corrupt-<timestamp>` and capture restarts from an empty list;
+- `exports/` is only used by the `/prompt-recall export` command — the settings page downloads the payload in memory and never writes it.
+
+## Architecture
 
 ```
 session/event (user/message, source.kind=user)
@@ -77,29 +120,54 @@ session/event (user/message, source.kind=user)
         ▼
 lib/index.js ── HistoryStore ── per-workspace JSON
         │
-        │  connection.rpc.handle('dsh-nonead-prompt-recall', 'history')
+        │  connection.rpc.handle('/dsh-nonead-prompt-recall', 'history')
         ▼
 lib/client.js (browser) ── conversation.input.shell(id).setDraft(text)
         ▲
         └─ document keydown (capture) on [data-composer-input]
 ```
 
-- **host 半**：监听 `session/event`，把真人提示词按工作区落盘；通过 Connection RPC 暴露只读的 `history` 端点。
-- **client 半**：在 `document` 捕获阶段拦截输入框的 ↑/↓，通过 harness 自己的 composer facade 写草稿（不直接改 DOM），因此草稿持久化、发送按钮、Lexical 撤销栈都保持一致。
-- 浏览器半以 `window.__ModuleLoader__.load({ id, factory })` 形式打包（DSH client 模块加载器的约定）。
+- **host half**: listens to `session/event`, persists human prompts per workspace, and exposes `/dsh-nonead-prompt-recall` over Connection RPC (the channel name must be an absolute path). Endpoints: `history`, `ping`, `settings.get`, `settings.set`, `history.clear`, `history.export`, `history.importPayload`; `history.export` returns an in-memory payload and never writes a host file.
+- **client half**: intercepts ↑/↓ on `[data-composer-input]` in the document capture phase and writes the draft through the harness's own composer facade (never by poking the DOM), so draft persistence, the send button and Lexical's undo stack stay consistent.
+- the browser half is bundled as `window.__ModuleLoader__.load({ id, factory })`, the contract of DSH's client module loader.
 
-## 开发
+## Localization
+
+Display metadata on the Plugins page is localized through `locale/<id>.json` (language ids are lowercase, matching DSH's client locales):
+
+- `locale/en.json` — English anchor (required; its presence enables localized metadata);
+- `locale/zh.json` — Simplified Chinese.
+
+Each file uses the `meta` namespace:
+
+```json
+{ "meta": { "title": "Prompt Recall", "description": "…" } }
+```
+
+The host resolves these files through the package `exports` map, so `"./locale/*": "./locale/*"` must stay exported. `package.json`'s `description` is the plain-string fallback for surfaces without locale data (and for npm). Documentation ships in English (`README.md`) and Simplified Chinese (`README.zh.md`).
+
+## Development
 
 ```powershell
 npm run build:client   # src/*.js -> lib/client.js
-npm test               # node:test（沙箱内使用 --test-isolation=none）
-npm run check
+npm test               # node:test (uses --test-isolation=none inside the Windows sandbox)
+npm run check          # build + syntax check + the whole suite
+node scripts/build-client.mjs --check   # fail when lib/client.js is stale
 ```
 
-- `src/core.js` 是纯决策函数（可单测）；`src/client.js` 是浏览器集成；`scripts/build-client.mjs` 只做 ESM → ModuleLoader 包裹，无第三方依赖。
-- `lib/index.js`、`lib/history-store.js`、`lib/message-text.js` 均为纯 Node，可直接 `node --test`。
+- `src/core.js` holds the pure navigation decisions (unit-testable); `src/client.js` is the browser integration; `scripts/build-client.mjs` only strips ESM syntax and wraps it for the ModuleLoader (no third-party dependency).
+- `lib/index.js`, `lib/history-store.js` and `lib/message-text.js` are plain Node modules and can be tested with `node --test`.
+- The suite (65 tests) includes a plugin-boundary end-to-end test (host capture → RPC → key handling → `setDraft`) and a settings-nav icon test; the real-window checklist is in [docs/E2E.md](docs/E2E.md).
+- CI (`.github/workflows/ci.yml`) runs `npm run check` plus the bundle-sync guard on Node 24.
+- `PLUGIN_VERSION` is read from `package.json`: bump the version there and add a `CHANGELOG.md` entry when releasing.
 
-## 兼容性
+## Documentation
 
-- 宿主：DSH 0.2.1-rc.3（Nonead DSH Desktop 2.1.11）实测可用；
-- 依赖的宿主内部约定：`[data-composer-input]`、`conversation.input.shell(id).setDraft()`、`sessions.list` 快照的 `cwd` / `retainedBy.mainView`、`session/event` 的 `user/message`。宿主升级后若这些约定变化，需要同步适配（改动集中在 `lib/client.js` 与 `src/client.js`）。
+- [CHANGELOG.md](CHANGELOG.md) — release history (bilingual);
+- [docs/E2E.md](docs/E2E.md) — manual end-to-end matrix (keyboard, commands, settings, backup);
+- [docs/RELEASE.md](docs/RELEASE.md) — pre-release checklist, packaging and publish/rollback steps.
+
+## Compatibility
+
+- Host: DSH 0.2.1-rc.3 (Nonead DSH Desktop 2.1.11), verified;
+- Host contracts relied upon: `[data-composer-input]`, `conversation.input.shell(id).setDraft()`, the `cwd` / `retainedBy.mainView` fields of the `sessions.list` snapshot, and `session/event`'s `user/message`. If a future host changes them, adapt `lib/client.js` and `src/client.js` (the changes are concentrated there).
