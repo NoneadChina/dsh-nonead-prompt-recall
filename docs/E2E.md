@@ -13,7 +13,7 @@ DSH Desktop 窗口这一公里需要宿主重载后由人工或桌面自动化�
    **提示词召回**).
 2. The host was restarted after the last code change, and the page was reloaded (client bundles load at page boot).
 3. `<DSH_HOME>/logs/nonead-dsh-desktop.log` contains:
-   `[dsh-nonead-prompt-recall] host ready v0.6.1`.
+   `[dsh-nonead-prompt-recall] host ready v0.6.2`.
 
 ## Steps / 步骤
 

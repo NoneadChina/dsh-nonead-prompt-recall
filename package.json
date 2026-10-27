@@ -1,6 +1,6 @@
 {
   "name": "dsh-nonead-prompt-recall",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Composer history for DeepSeek Harness: press ↑ in an empty input box to recall the previous prompt, ↑ again for older ones, ↓ to walk back; stored per workspace and survives restarts; manage it with /prompt-recall or Settings → Prompt History.",
   "type": "module",
   "main": "lib/index.js",

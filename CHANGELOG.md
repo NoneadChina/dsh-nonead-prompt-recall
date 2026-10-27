@@ -6,6 +6,17 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 本文件记录所有值得注意的改动，格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.6.2] - 2026-10-28
+
+### Fixed / 修复
+
+- Dark-theme parity for the settings page: it referenced theme variables DSH never defines (`--dsw-alias-bg-l1`, `--dsw-alias-bg-l2`, `--dsw-alias-brand-primary-hover`), so every surface fell back to hard-coded light colors and rendered as a white card on a dark dialog.
+- 设置页深色模式适配：原样式引用了 DSH 未定义的变量（`--dsw-alias-bg-l1`、`--dsw-alias-bg-l2`、`--dsw-alias-brand-primary-hover`），深色下全部回退到写死的浅色值，卡片在深色对话框中呈白底。
+- Surfaces now use real design tokens (`--dsw-alias-bg-layer-1/2`, `--dsw-alias-border-l2`, `--dsw-alias-button-info-fill/-hover`, `--dsw-alias-label-primary-foreground`, `--dsw-alias-state-*`, `--dsw-alias-switch-thumb`, `--dsw-alias-scrollbar-bg-l2`, `--dsw-shadow-lv1`), and brand tints are derived with `color-mix()` so one rule set serves both themes.
+- 表面改用真实设计 token（`--dsw-alias-bg-layer-1/2`、`--dsw-alias-border-l2`、`--dsw-alias-button-info-fill/-hover`、`--dsw-alias-label-primary-foreground`、`--dsw-alias-state-*`、`--dsw-alias-switch-thumb`、`--dsw-alias-scrollbar-bg-l2`、`--dsw-shadow-lv1`），品牌色浅底由 `color-mix()` 派生，一套规则同时服务明暗两色。
+- Hard-coded colors removed from the status dot, switch, danger button, success/error notes, badge, logo gradient, card shadow and focus ring; light fallbacks on token references were dropped so a missing variable can no longer silently revert to a light value.
+- 移除状态点、开关、危险按钮、成功/错误提示、徽章、logo 渐变、卡片阴影与焦点环中的硬编码颜色，并去掉 token 的浅色回退值，避免变量缺失时静默退回浅色。
+
 ## [0.6.1] - 2026-10-27
 
 ### Added / 新增
