@@ -1,5 +1,7 @@
 # dsh-nonead-prompt-recall
 
+[![npm](https://img.shields.io/npm/v/dsh-nonead-prompt-recall.svg)](https://www.npmjs.com/package/dsh-nonead-prompt-recall)
+
 [English](README.md) | **简体中文**
 
 DeepSeek Harness 插件：给输入框加上 shell 风格的**提示词历史召回**。

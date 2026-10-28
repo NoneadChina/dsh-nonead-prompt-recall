@@ -1,5 +1,7 @@
 # dsh-nonead-prompt-recall
 
+[![npm](https://img.shields.io/npm/v/dsh-nonead-prompt-recall.svg)](https://www.npmjs.com/package/dsh-nonead-prompt-recall)
+
 **English** | [简体中文](README.zh.md)
 
 A DeepSeek Harness plugin that gives the composer shell-style **prompt history recall**.

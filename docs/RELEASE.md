@@ -57,9 +57,9 @@ backup paths).
 
 ## 5. Publish / 发布
 
-The package is public: [dsh-nonead-prompt-recall](https://www.npmjs.com/package/dsh-nonead-prompt-recall). `0.6.3` (metadata fix) is published; `0.7.0` adds the eight-language UI and still has to be pushed to the registry.
+The package is public: [dsh-nonead-prompt-recall](https://www.npmjs.com/package/dsh-nonead-prompt-recall). `0.7.0` is the current release (eight-language UI, `gitHead` bc51957); `0.6.3` added the metadata fix and `0.6.2` was the first version.
 
-包已公开发布：`0.6.3`（元数据修正）已发布；`0.7.0` 新增八语言界面，尚需发布。
+包已公开发布：当前版本 `0.7.0`（八语言界面，`gitHead` bc51957）；`0.6.3` 修了元数据，`0.6.2` 是首个版本。
 
 Prerequisite: `npm login`. This account asks for proof-of-presence on every publish (OTP prompt or the browser URL npm prints), so publishing from a terminal the maintainer controls is the reliable path.
 
