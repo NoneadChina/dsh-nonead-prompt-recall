@@ -4,7 +4,7 @@ Run from the repository root on Windows (Node 24) unless noted.
 
 在仓库根目录执行（Windows、Node 24）。
 
-Target version / 目标版本：**v0.6.2**。
+Target version / 目标版本：**v0.6.3**。
 
 ## 1. Pre-flight / 预检
 
@@ -44,8 +44,8 @@ bundle must load through `window.__ModuleLoader__` and export `apply`.
 
 Restart DSH Desktop, refresh, then check:
 
-- log contains `[dsh-nonead-prompt-recall] host ready v0.6.2`;
-- Settings → 提示词历史 shows the history glyph in the nav, the v0.6.2 header/status layout, and export / import / clear above the list;
+- log contains `[dsh-nonead-prompt-recall] host ready v0.6.3`;
+- Settings → 提示词历史 shows the history glyph in the nav, the v0.6.3 header/status layout, and export / import / clear above the list;
 - empty composer + ↑ recalls the newest prompt, ↑ walks older, ↓ walks back;
 - `/prompt-recall status` responds;
 - 导出 JSON downloads a file; 导入并预览 shows the preview and merges on confirm;

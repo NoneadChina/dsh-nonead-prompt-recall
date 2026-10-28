@@ -1,6 +1,6 @@
 {
   "name": "dsh-nonead-prompt-recall",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Composer history for DeepSeek Harness: press ↑ in an empty input box to recall the previous prompt, ↑ again for older ones, ↓ to walk back; stored per workspace and survives restarts; manage it with /prompt-recall or Settings → Prompt History.",
   "type": "module",
   "main": "lib/index.js",
@@ -54,6 +54,14 @@
     "dsh": ">=0.2.1-rc.1 <0.3.0-0"
   },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NoneadChina/dsh-nonead-prompt-recall.git"
+  },
+  "homepage": "https://github.com/NoneadChina/dsh-nonead-prompt-recall#readme",
+  "bugs": {
+    "url": "https://github.com/NoneadChina/dsh-nonead-prompt-recall/issues"
+  },
   "author": {
     "name": "拓德科技 (Suzhou Nonead Robot Technology Co., Ltd.)",
     "url": "https://www.nonead.com"

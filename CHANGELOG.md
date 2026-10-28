@@ -6,6 +6,13 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 本文件记录所有值得注意的改动，格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.6.3] - 2026-10-28
+
+### Added / 新增
+
+- `repository`, `homepage` and `bugs` metadata, so the npm page links back to GitHub and accepts issue reports.
+- 补充 `repository`、`homepage`、`bugs` 元数据，npm 页面可跳回 GitHub 仓库并接受 Issue。
+
 ## [0.6.2] - 2026-10-28
 
 ### Fixed / 修复
