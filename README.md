@@ -4,7 +4,7 @@
 
 A DeepSeek Harness plugin that gives the composer shell-style **prompt history recall**.
 
-Current version: **0.6.3**.
+Current version: **0.7.0**.
 
 - Press **↑** in an empty composer to load the last prompt you sent;
 - press **↑** again to walk further back;
@@ -151,12 +151,22 @@ lib/client.js (browser) ── conversation.input.shell(id).setDraft(text)
 
 ## Localization
 
-Display metadata on the Plugins page is localized through `locale/<id>.json` (language ids are lowercase, matching DSH's client locales):
+The plugin follows the desktop app's language: whatever language is selected in **Settings → General → Language** (persisted as `locale.preference`) drives the settings page, the `/prompt-recall` command output and the Plugins-page title/description. All eight languages DSH ships are covered:
 
-- `locale/en.json` — English anchor (required; its presence enables localized metadata);
-- `locale/zh.json` — Simplified Chinese.
+| id | language | files |
+| --- | --- | --- |
+| `zh` | 简体中文 | `locale/zh.json` |
+| `en` | English | `locale/en.json` |
+| `ja` | 日本語 | `locale/ja.json` |
+| `es` | Español | `locale/es.json` |
+| `fr` | Français | `locale/fr.json` |
+| `de` | Deutsch | `locale/de.json` |
+| `ru` | Русский | `locale/ru.json` |
+| `pt` | Português (Brasil) | `locale/pt.json` |
 
-Each file uses the `meta` namespace:
+Display metadata on the Plugins page comes from `locale/<id>.json` (lowercase ids, matching DSH's client locales); the settings page registers its dictionaries through `ctx.locale.register(ns, DICTS)` (`src/i18n.js`), and the command surface translates from `lib/i18n.js`. Both require the `zh` and `en` baselines and fall back to `en`, then to the key itself, for a missing translation. `normalizeLocale()` maps host values such as `zh-CN`, `pt-BR` or `en_US` onto the eight ids and returns `en` for anything unknown.
+
+Each metadata file uses the `meta` namespace:
 
 ```json
 { "meta": { "title": "Prompt Recall", "description": "…" } }

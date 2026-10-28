@@ -4,7 +4,7 @@
 
 DeepSeek Harness 插件：给输入框加上 shell 风格的**提示词历史召回**。
 
-当前版本：**0.6.3**。
+当前版本：**0.7.0**。
 
 - 输入框为空时按 **↑**：载入上一条提交过的提示词；
 - 再按 **↑**：继续向前载入更早的一条；
@@ -150,12 +150,22 @@ lib/client.js (browser) ── conversation.input.shell(id).setDraft(text)
 
 ## 本地化
 
-插件页显示的标题与描述通过 `locale/<id>.json` 本地化（语言 id 用 DSH 客户端的小写形式）：
+插件跟随桌面程序的语言：**设置 → 通用 → 语言** 里选中的语言（持久化为 `locale.preference`）决定设置页、`/prompt-recall` 命令输出以及插件页标题/描述。覆盖 DSH 内置的全部八种语言：
 
-- `locale/en.json` — 英文基线（必需，存在它才会启用本地化元数据）；
-- `locale/zh.json` — 简体中文。
+| id | 语言 | 文件 |
+| --- | --- | --- |
+| `zh` | 简体中文 | `locale/zh.json` |
+| `en` | English | `locale/en.json` |
+| `ja` | 日本語 | `locale/ja.json` |
+| `es` | Español | `locale/es.json` |
+| `fr` | Français | `locale/fr.json` |
+| `de` | Deutsch | `locale/de.json` |
+| `ru` | Русский | `locale/ru.json` |
+| `pt` | Português (Brasil) | `locale/pt.json` |
 
-每个文件使用 `meta` 命名空间：
+插件页的标题与描述来自 `locale/<id>.json`（小写 id，与 DSH 客户端语言一致）；设置页通过 `ctx.locale.register(ns, DICTS)` 注册字典（`src/i18n.js`），命令面由 `lib/i18n.js` 翻译。两者都以 `zh` 与 `en` 为基线，缺翻译时回退到 `en`，再回退到 key 本身。`normalizeLocale()` 把 `zh-CN`、`pt-BR`、`en_US` 这类宿主值归一到八个 id，无法识别时返回 `en`。
+
+每个元数据文件使用 `meta` 命名空间：
 
 ```json
 { "meta": { "title": "提示词召回", "description": "…" } }

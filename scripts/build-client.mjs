@@ -1,6 +1,7 @@
 /**
- * Wrap src/core.js + src/client.js into the ESM-less browser bundle DSH's
- * client module loader expects (`window.__ModuleLoader__.load({...})`).
+ * Wrap src/protocol.js + src/i18n.js + src/core.js + src/settings.js +
+ * src/client.js into the ESM-less browser bundle DSH's client module loader
+ * expects (`window.__ModuleLoader__.load({...})`).
  *
  * The sources stay plain ESM for unit tests; this script only strips the
  * module syntax (no bundler, no dependencies).
@@ -31,13 +32,14 @@ function toFactoryBody(source) {
 }
 
 const protocol = toFactoryBody(await readFile(join(ROOT, 'src', 'protocol.js'), 'utf8'));
+const i18n = toFactoryBody(await readFile(join(ROOT, 'src', 'i18n.js'), 'utf8'));
 const core = toFactoryBody(await readFile(join(ROOT, 'src', 'core.js'), 'utf8'));
 const settings = toFactoryBody(await readFile(join(ROOT, 'src', 'settings.js'), 'utf8'));
 const client = toFactoryBody(await readFile(join(ROOT, 'src', 'client.js'), 'utf8'));
 
 // The wrapper cannot resolve modules; leftover ESM syntax means the strip logic
 // (or a source edit) is wrong and the bundle would fail at load time.
-if (/^\s*(?:import|export)\s/mu.test(`${protocol}\n${core}\n${settings}\n${client}`)) {
+if (/^\s*(?:import|export)\s/mu.test(`${protocol}\n${i18n}\n${core}\n${settings}\n${client}`)) {
   console.error('build-client: unresolved import/export after stripping');
   process.exit(1);
 }
@@ -52,6 +54,8 @@ window.__ModuleLoader__.load({
     var exports = module.exports;
 
 ${protocol}
+
+${i18n}
 
 ${core}
 

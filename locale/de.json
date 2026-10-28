@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Prompt-Verlauf",
+    "description": "Prompt-Verlauf für DeepSeek Harness: Mit ↑ im leeren Eingabefeld den letzten Prompt abrufen, erneut ↑ für ältere, ↓ führt zurück; pro Arbeitsbereich gespeichert und übersteht Neustarts. Erfassung, Limits, Aufbewahrung und Export/Import über /prompt-recall oder Einstellungen → Prompt-Verlauf verwalten."
+  }
+}

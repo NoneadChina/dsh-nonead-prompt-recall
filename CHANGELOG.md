@@ -6,6 +6,27 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 本文件记录所有值得注意的改动，格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.7.0] - 2026-10-29
+
+### Added / 新增
+
+- Full UI localization for the eight languages DSH ships — Simplified Chinese, English, Japanese, Spanish, French, German, Russian and Brazilian Portuguese. The settings page, the `/prompt-recall` output and the plugin title/description follow the desktop app language (Settings → General → Language, persisted as `locale.preference`).
+- 界面完整支持 DSH 内置的八种语言（简体中文、英文、日语、西班牙语、法语、德语、俄语、巴西葡萄牙语）：设置页、`/prompt-recall` 输出与插件标题/描述都跟随桌面程序语言（设置 → 通用 → 语言，持久化为 `locale.preference`）。
+- `src/i18n.js` registers the settings dictionaries through `ctx.locale.register`; `lib/i18n.js` renders command text, normalizing `zh-CN` / `pt-BR` / `en_US` to `zh` / `pt` / `en` and falling back to `en`.
+- 新增 `src/i18n.js`（经 `ctx.locale.register` 注册设置页字典）与 `lib/i18n.js`（归一 `zh-CN` / `pt-BR` / `en_US`，缺翻译回退 `en`）。
+- New `locale/{ja,es,fr,de,ru,pt}.json` metadata files complete the eight-language Plugins-page set.
+- 新增 `locale/{ja,es,fr,de,ru,pt}.json` 元数据，凑齐插件页的八种语言。
+
+### Changed / 变更
+
+- `/prompt-recall` messages are table-driven instead of hard-coded zh/en string pairs, so every message follows the active language.
+- `/prompt-recall` 的消息改为查表渲染，不再写死 zh/en 双语字符串，所有消息都随当前语言。
+
+### Tests / 测试
+
+- New `test/i18n.test.mjs` checks key parity, placeholder parity and zero-width characters across all eight languages; the host test asserts the command follows the language preference (75 tests total).
+- 新增 `test/i18n.test.mjs` 校验八种语言的键集、占位符一致性与零宽字符；宿主测试断言命令随语言偏好切换（共 75 项）。
+
 ## [0.6.3] - 2026-10-28
 
 ### Added / 新增

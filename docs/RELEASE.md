@@ -4,7 +4,7 @@ Run from the repository root on Windows (Node 24) unless noted.
 
 在仓库根目录执行（Windows、Node 24）。
 
-Target version / 目标版本：**v0.6.3**。
+Target version / 目标版本：**v0.7.0**。
 
 ## 1. Pre-flight / 预检
 
@@ -21,11 +21,11 @@ Expected: tests all pass, `lib/client.js is up to date`.
 npm pack --dry-run --cache .tmp\npm-cache
 ```
 
-Expected: **17 files / ~40 KB** unpacked from a clean tree. The tarball must contain exactly these areas — no `src/`, `test/`, `scripts/`,
+Expected: **24 files / ~56 KB** unpacked from a clean tree. The tarball must contain exactly these areas — no `src/`, `test/`, `scripts/`,
 `.github/`, `.tmp/` or project-memory files:
 
 - `lib/` (host + generated client bundle)
-- `locale/` (`en.json`, `zh.json`)
+- `locale/` (`zh.json`, `en.json`, `ja.json`, `es.json`, `fr.json`, `de.json`, `ru.json`, `pt.json`)
 - `cordis.patch.yml`
 - `README.md`, `README.zh.md`, `CHANGELOG.md`, `LICENSE`, `docs/E2E.md`, `docs/RELEASE.md`
 
@@ -44,8 +44,9 @@ bundle must load through `window.__ModuleLoader__` and export `apply`.
 
 Restart DSH Desktop, refresh, then check:
 
-- log contains `[dsh-nonead-prompt-recall] host ready v0.6.3`;
-- Settings → 提示词历史 shows the history glyph in the nav, the v0.6.3 header/status layout, and export / import / clear above the list;
+- log contains `[dsh-nonead-prompt-recall] host ready v0.7.0`;
+- Settings → 提示词历史 shows the history glyph in the nav, the v0.7.0 header/status layout, and export / import / clear above the list;
+- switch Settings → General → Language across 中文 / English / 日本語 / Español / Français / Deutsch / Русский / Português and confirm the section label, page copy and `/prompt-recall status` follow the selection;
 - empty composer + ↑ recalls the newest prompt, ↑ walks older, ↓ walks back;
 - `/prompt-recall status` responds;
 - 导出 JSON downloads a file; 导入并预览 shows the preview and merges on confirm;
@@ -56,9 +57,9 @@ backup paths).
 
 ## 5. Publish / 发布
 
-The package is public: [dsh-nonead-prompt-recall](https://www.npmjs.com/package/dsh-nonead-prompt-recall). `0.6.2` was the first published version; `0.6.3` adds `repository` / `homepage` / `bugs` and still has to be pushed to the registry.
+The package is public: [dsh-nonead-prompt-recall](https://www.npmjs.com/package/dsh-nonead-prompt-recall). `0.6.3` (metadata fix) is published; `0.7.0` adds the eight-language UI and still has to be pushed to the registry.
 
-包已公开发布：`0.6.2` 是首个版本；`0.6.3` 补齐 `repository` / `homepage` / `bugs`，尚需发布。
+包已公开发布：`0.6.3`（元数据修正）已发布；`0.7.0` 新增八语言界面，尚需发布。
 
 Prerequisite: `npm login`. This account asks for proof-of-presence on every publish (OTP prompt or the browser URL npm prints), so publishing from a terminal the maintainer controls is the reliable path.
 

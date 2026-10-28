@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Historique des prompts",
+    "description": "Historique du compositeur pour DeepSeek Harness : appuyez sur ↑ dans une zone de saisie vide pour rappeler le prompt précédent, ↑ encore pour remonter plus loin, ↓ pour revenir ; l’historique est conservé par espace de travail et survit aux redémarrages. Gérez la capture, les limites, la rétention et l’export/import avec /prompt-recall ou Réglages → Historique des prompts."
+  }
+}

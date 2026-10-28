@@ -58,14 +58,30 @@ test('the settings nav row gets the history-icon marker', async () => {
     inject(_name, callback) { callback(); },
     register() { return () => {}; },
   };
+  const registered = [];
   const ctx = {
     slots,
-    locale: { register() {}, bind: () => (key) => (key === 'nav' ? '提示词历史' : key) },
+    locale: {
+      register(ns, dicts) { registered.push({ ns, dicts }); },
+      bind: () => (key) => (key === 'nav' ? '提示词历史' : key),
+    },
     get: () => 'connection',
     sessions: {},
     effect(fn) { fn(); },
   };
   exported.apply(ctx);
+
+  assert.equal(registered.length, 1, 'the namespace is registered once');
+  assert.equal(registered[0].ns, 'nonead-prompt-recall');
+  assert.deepEqual(
+    Object.keys(registered[0].dicts).sort(),
+    ['de', 'en', 'es', 'fr', 'ja', 'pt', 'ru', 'zh'],
+    'all eight DSH languages are registered',
+  );
+  for (const [locale, dict] of Object.entries(registered[0].dicts)) {
+    assert.equal(typeof dict.nav, 'string', `${locale}: nav`);
+    assert.ok(dict.nav.trim().length > 0, `${locale}: nav is non-empty`);
+  }
 
   assert.equal(navButton.hasAttribute('data-dsh-prompt-recall-nav'), true);
   assert.equal(otherButton.hasAttribute('data-dsh-prompt-recall-nav'), false);

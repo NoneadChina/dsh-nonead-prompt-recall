@@ -9,7 +9,7 @@ import { PLUGIN_VERSION } from '../lib/index.js';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Minimal Cordis host context capturing the pieces apply() registers. */
-function makeHost() {
+function makeHost(options = {}) {
   const listeners = new Map();
   let rpc = null;
   const commands = [];
@@ -48,7 +48,8 @@ function makeHost() {
       }
       callback(scope);
     },
-    get() {
+    get(service) {
+      if (service === 'settings' && options.settings) return options.settings;
       return undefined;
     },
     effect() {},
@@ -265,6 +266,56 @@ test('the /prompt-recall command rejects traversal and invalid import files', as
     signal: { aborted: false },
   });
   assert.equal(exportWithNoWorkspace.kind, 'error');
+});
+
+test('the /prompt-recall command follows the DSH language preference', async (t) => {
+  const home = await mkdtemp(join(tmpdir(), 'prompt-recall-locale-'));
+  const previous = process.env.DSH_HOME;
+  process.env.DSH_HOME = home;
+  t.after(async () => {
+    if (previous === undefined) delete process.env.DSH_HOME;
+    else process.env.DSH_HOME = previous;
+    await sleep(75);
+    await rm(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  });
+
+  const { apply } = await import('../lib/index.js');
+  const cwd = 'D:\\Work\\Locale';
+  const settingsFor = (preference) => ({
+    describe: () => [{ ns: 'locale', value: { preference } }],
+  });
+  const invokeFor = async (preference, rawInput) => {
+    const host = makeHost({ settings: settingsFor(preference) });
+    apply(host.ctx);
+    const command = host.commands[0];
+    const result = await command.handler({
+      rawInput,
+      agent: { session: { id: 'session-locale', header: { cwd } } },
+      signal: { aborted: false },
+    });
+    return { command, result };
+  };
+
+  const cases = [
+    ['zh-CN', '提示词召回 v'],
+    ['en-US', 'Prompt Recall v'],
+    ['ja-JP', 'プロンプト履歴 v'],
+    ['es-ES', 'Historial de prompts v'],
+    ['fr-FR', 'Historique des prompts v'],
+    ['de-DE', 'Prompt-Verlauf v'],
+    ['ru-RU', 'История промптов v'],
+    ['pt-BR', 'Histórico de prompts v'],
+    ['xx-YY', 'Prompt Recall v'],
+  ];
+  for (const [preference, expected] of cases) {
+    const { command, result } = await invokeFor(preference, 'status');
+    assert.equal(result.kind, 'success');
+    assert.ok(result.text.startsWith(expected), `${preference}: ${result.text.split('\n')[0]}`);
+    assert.ok(command.description.trim().length > 0, `${preference}: command description is set`);
+  }
+
+  const off = await invokeFor('de-DE', 'off');
+  assert.equal(off.result.text, 'Erfassung ist jetzt aus');
 });
 
 test('settings RPC serves status, saves settings and round-trips history actions', async (t) => {
