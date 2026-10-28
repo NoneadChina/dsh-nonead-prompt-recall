@@ -10,7 +10,8 @@ DSH Desktop 窗口这一公里需要宿主重载后由人工或桌面自动化�
 ## Preconditions / 前置条件
 
 1. The plugin is installed and enabled (Plugins page shows **Prompt Recall** /
-   **提示词召回**).
+   **提示词召回**), either from the registry (`dsh plugin add dsh-nonead-prompt-recall`)
+   or from this checkout through the plugin page's local-directory option.
 2. The host was restarted after the last code change, and the page was reloaded (client bundles load at page boot).
 3. `<DSH_HOME>/logs/nonead-dsh-desktop.log` contains:
    `[dsh-nonead-prompt-recall] host ready v0.6.3`.

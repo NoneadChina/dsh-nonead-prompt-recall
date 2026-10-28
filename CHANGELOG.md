@@ -13,6 +13,12 @@ adheres to [Semantic Versioning](https://semver.org/).
 - `repository`, `homepage` and `bugs` metadata, so the npm page links back to GitHub and accepts issue reports.
 - 补充 `repository`、`homepage`、`bugs` 元数据，npm 页面可跳回 GitHub 仓库并接受 Issue。
 
+### Changed / 变更
+
+- Install docs now lead with the npm registry (`dsh plugin add dsh-nonead-prompt-recall`), keep the plugin-page local-directory path for the `desktop` profile, and use the current checkout path (`D:/MyProgram/GitHub/...`).
+- 安装文档改为优先 npm registry 安装，保留 `desktop` profile 的插件页本地目录方式，并把示例路径改为当前仓库位置（`D:/MyProgram/GitHub/...`）。
+- `docs/RELEASE.md` documents the real publish state, the proof-of-presence / `0.0.0-stage` placeholder behaviour and the registry-readback checks.
+
 ## [0.6.2] - 2026-10-28
 
 ### Fixed / 修复

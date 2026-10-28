@@ -34,27 +34,45 @@ DeepSeek Harness 插件：给输入框加上 shell 风格的**提示词历史召
 
 ## 安装
 
-### 方式 A：插件页安装（`desktop` profile 只能走这里）
+### 方式 A：从 npm registry 安装（最省事）
 
-在 DSH Desktop 的插件页面选择**安装 → 本地目录**，填入：
+包已公开发布在 npm：[dsh-nonead-prompt-recall](https://www.npmjs.com/package/dsh-nonead-prompt-recall)。
+
+- 在 DSH Desktop 的插件页面选择**添加插件**，输入包名：
 
 ```
-D:/MyProgram/GitLab/dsh-nonead-prompt-recall
+dsh-nonead-prompt-recall
 ```
 
-`desktop` profile 由 Electron 应用独占管理，命令行安装会被明确拒绝：
+- 对不受 Electron 独占的其他 profile，命令行等价：
+
+```powershell
+dsh plugin --profile <profile-name> add dsh-nonead-prompt-recall
+```
+
+### 方式 B：插件页 + 本地目录（`desktop` profile 也可以走这里）
+
+在 DSH Desktop 的插件页面选择**添加插件**，填入仓库路径（输入框接受本地目录）：
+
+```
+D:/MyProgram/GitHub/dsh-nonead-prompt-recall
+```
+
+`desktop` profile 由 Electron 应用独占管理，直接对它执行命令行安装会被明确拒绝：
 
 ```
 error: profile "desktop" is managed exclusively by the Electron application
 ```
 
-安装完成后刷新页面（或重启 DSH Desktop），让浏览器端 bundle 生效。
+本地目录安装是**链接**（junction）而不是复制：改工作区源码后，客户端半刷新页面即生效，宿主半需重启。
 
-### 方式 B：其他 profile（命令行）
+### 方式 C：其他 profile 从本地目录安装（命令行）
 
 ```powershell
-dsh plugin --profile <profile-name> add "file:D:/MyProgram/GitLab/dsh-nonead-prompt-recall"
+dsh plugin --profile <profile-name> add "file:D:/MyProgram/GitHub/dsh-nonead-prompt-recall"
 ```
+
+安装完成后刷新页面（或重启 DSH Desktop），让浏览器端 bundle 生效。
 
 ## 验证
 
@@ -164,7 +182,8 @@ node scripts/build-client.mjs --check   # 产物与源码不一致时失败
 
 - [CHANGELOG.md](CHANGELOG.md) — 版本变更记录（中英对照）；
 - [docs/E2E.md](docs/E2E.md) — 手动端到端验收矩阵（按键、命令、设置页、备份）；
-- [docs/RELEASE.md](docs/RELEASE.md) — 发布前检查、打包与发布/回滚步骤。
+- [docs/RELEASE.md](docs/RELEASE.md) — 发布前检查、打包与发布/回滚步骤；
+- 仓库：<https://github.com/NoneadChina/dsh-nonead-prompt-recall> · 问题反馈：<https://github.com/NoneadChina/dsh-nonead-prompt-recall/issues>。
 
 ## 兼容性
 

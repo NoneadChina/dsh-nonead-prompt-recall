@@ -54,15 +54,25 @@ Restart DSH Desktop, refresh, then check:
 See [E2E.md](./E2E.md) for the full manual matrix (keyboard, command, settings,
 backup paths).
 
-## 5. Publish (when the repository is ready) / 发布
+## 5. Publish / 发布
 
-Prerequisite: `npm login` and a free package name (unscoped public package).
+The package is public: [dsh-nonead-prompt-recall](https://www.npmjs.com/package/dsh-nonead-prompt-recall). `0.6.2` was the first published version; `0.6.3` adds `repository` / `homepage` / `bugs` and still has to be pushed to the registry.
 
-前提：已 `npm login`，且包名可用（无 scope 的公开包）。
+包已公开发布：`0.6.2` 是首个版本；`0.6.3` 补齐 `repository` / `homepage` / `bugs`，尚需发布。
+
+Prerequisite: `npm login`. This account asks for proof-of-presence on every publish (OTP prompt or the browser URL npm prints), so publishing from a terminal the maintainer controls is the reliable path.
+
+前提：已 `npm login`。本账号每次发布都要求 proof-of-presence（OTP 或 npm 打印的浏览器链接），因此由维护者在自己终端执行最稳妥。
 
 ```powershell
 npm publish --access public
 ```
+
+Notes / 注意：
+
+- npm 11 may create a `0.0.0-stage` placeholder while the real version waits for approval; inspect with `npm stage list`, finish with `npm stage approve <id>`. The placeholder is never the `latest` tag.
+- Read the registry, not the local cache: `npm view dsh-nonead-prompt-recall dist-tags --prefer-online` or `https://registry.npmjs.org/dsh-nonead-prompt-recall/latest`.
+- Compare `dist.shasum` with the locally built tarball (`npm pack`) to prove the uploaded file is the one built here.
 
 Then install from the registry:
 

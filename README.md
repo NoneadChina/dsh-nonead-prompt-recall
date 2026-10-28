@@ -34,27 +34,45 @@ Current version: **0.6.3**.
 
 ## Install
 
-### Option A: plugin page (the `desktop` profile can only use this)
+### Option A: from the npm registry (simplest)
 
-In DSH Desktop open the Plugins page, choose **Add plugin → local directory**, and enter:
+The package is public on npm: [dsh-nonead-prompt-recall](https://www.npmjs.com/package/dsh-nonead-prompt-recall).
+
+- In DSH Desktop, open the Plugins page, choose **Add plugin**, and enter the package name:
 
 ```
-D:/MyProgram/GitLab/dsh-nonead-prompt-recall
+dsh-nonead-prompt-recall
 ```
 
-The `desktop` profile is owned exclusively by the Electron app; CLI installs are rejected:
+- For any profile that the Electron app does not own, the CLI is equivalent:
+
+```powershell
+dsh plugin --profile <profile-name> add dsh-nonead-prompt-recall
+```
+
+### Option B: plugin page with a local checkout (the `desktop` profile can also use this)
+
+In DSH Desktop open the Plugins page, choose **Add plugin**, and enter the repository path (the box accepts a local directory):
+
+```
+D:/MyProgram/GitHub/dsh-nonead-prompt-recall
+```
+
+The `desktop` profile is owned exclusively by the Electron app; direct CLI installs against it are rejected:
 
 ```
 error: profile "desktop" is managed exclusively by the Electron application
 ```
 
-Refresh the page (or restart DSH Desktop) afterwards so the browser bundle loads.
+A local-directory install is linked (junction), not copied: edits in the checkout take effect after a page refresh (client half) or a host restart (host half).
 
-### Option B: other profiles (CLI)
+### Option C: other profiles from a local checkout (CLI)
 
 ```powershell
-dsh plugin --profile <profile-name> add "file:D:/MyProgram/GitLab/dsh-nonead-prompt-recall"
+dsh plugin --profile <profile-name> add "file:D:/MyProgram/GitHub/dsh-nonead-prompt-recall"
 ```
+
+Refresh the page (or restart DSH Desktop) afterwards so the browser bundle loads.
 
 ## Verify
 
@@ -165,7 +183,8 @@ node scripts/build-client.mjs --check   # fail when lib/client.js is stale
 
 - [CHANGELOG.md](CHANGELOG.md) — release history (bilingual);
 - [docs/E2E.md](docs/E2E.md) — manual end-to-end matrix (keyboard, commands, settings, backup);
-- [docs/RELEASE.md](docs/RELEASE.md) — pre-release checklist, packaging and publish/rollback steps.
+- [docs/RELEASE.md](docs/RELEASE.md) — pre-release checklist, packaging and publish/rollback steps;
+- repository: <https://github.com/NoneadChina/dsh-nonead-prompt-recall> · issues: <https://github.com/NoneadChina/dsh-nonead-prompt-recall/issues>.
 
 ## Compatibility
 
