@@ -292,8 +292,12 @@ export function apply(ctx) {
     /* the keyboard bridge must keep working even if the settings page fails */
   }
 
-  // Composer optimize button (conversation.input.activity slot). Same rule:
-  // a missing slot service only hides the button.
+  // Composer optimize button (conversation.input.right list slot; the activity
+  // slot next to it is single-occupant and owned by DSH's voice-input button).
+  // Registration must happen inside apply(): DSH fires slots.inject for
+  // declarations that are still being assembled, so a deferred registration never
+  // runs. The style tag is injected from the component on first render instead,
+  // which keeps the apply() window free of DOM writes.
   try {
     registerOptimizeButton(ctx);
   } catch {

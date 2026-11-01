@@ -8,7 +8,7 @@
 
 A DeepSeek Harness plugin that gives the composer shell-style **prompt history recall**.
 
-Current version: **0.8.0**.
+Current version: **0.8.1**.
 
 - Press **↑** in an empty composer to load the last prompt you sent;
 - press **↑** again to walk further back;
@@ -106,7 +106,7 @@ Export downloads a timestamped JSON file through the browser. Import opens a fil
 
 ## Prompt optimization
 
-Since 0.8.0 a sparkle button sits between the model selector and the Send button.
+Since 0.8.0 a sparkle button sits in the composer tool row, next to the model selector.
 
 - It rewrites the current draft with the session model; **you** review and send it — the plugin never sends, never clears the composer early, and never writes to your prompt history.
 - While the request runs the draft stays visible; only a successful rewrite replaces it, exactly once. Failures, timeouts, cancellation, or a draft you edited in the meantime leave your input untouched.

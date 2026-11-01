@@ -6,6 +6,20 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 本文件记录所有值得注意的改动，格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.8.1] - 2026-11-01
+
+### Fixed / 修复
+
+- **Boot failure after install**: the optimize button registered into `conversation.input.activity`, which DSH declares as a **single-occupant** slot and already mounts its voice-input button in. Registering a second occupant evicted it, left its client entry stuck in `loading`, and made the whole starter fail with `web boot: 1 entry did not activate` — DSH then dropped into recovery mode. The button now registers into the list slot `conversation.input.right` (compact controls before the submit action), which accepts a second cell safely.
+- **安装后无法启动**：优化按钮原先注册进 `conversation.input.activity`，而该 slot 在 DSH 中是**单占用者**、并已被自带语音输入按钮占用；注册第二个占用者会顶掉它，使其客户端 entry 停在 `loading`，整个启动因此报 `web boot: 1 entry did not activate` 并进入恢复模式。现在改注册到列表型 slot `conversation.input.right`（提交按钮前的紧凑控件），可安全容纳第二个占用者。
+- The style tag is now injected on the button's first render instead of during `apply()`, so plugin activation no longer writes to the document head while DSH is still settling the client roster.
+- 样式表改在按钮首次渲染时注入，不再于 `apply()` 期间写 document head，插件激活不再打扰 DSH 结算客户端 roster。
+
+### Changed / 变更
+
+- The sparkle button now sits in the composer tool row next to the model selector, instead of between the selector and Send.
+- 四角星按钮现在位于输入框工具行、模型选择器旁，而非选择器与发送键之间。
+
 ## [0.8.0] - 2026-11-01
 
 ### Added / 新增

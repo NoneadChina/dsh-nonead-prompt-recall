@@ -1,9 +1,14 @@
 /**
  * Composer "optimize prompt" button — the browser half of 0.8.0.
  *
- * Mounted into the harness's `conversation.input.activity` slot, which the
- * conversation UI renders between the model selector and Send. The component
- * owns one per-session state machine:
+ * Mounted into the harness's `conversation.input.right` slot: a *list* slot of
+ * compact controls that renders next to the model selector. The obvious
+ * neighbour, `conversation.input.activity`, is a **single-occupant** slot that
+ * DSH ships the voice-input button in — registering there evicts that occupant,
+ * leaves its entry stuck in `loading`, and fails the whole web boot with
+ * "1 entry did not activate". A list slot accepts a second cell safely.
+ *
+ * The component owns one per-session state machine:
  *
  *   ready ──click──▶ optimizing（draft untouched）──success──▶ done（undo）
  *     ▲                   │ failure / cancel / draft changed
@@ -20,8 +25,11 @@ import { CHANNEL, ENDPOINT_OPTIMIZE } from './protocol.js';
 import { buildDraftDocument, draftFromShell, isEmptyText, isOverLimit, maskDraft, unmaskDraft } from './optimize.js';
 import { DICTS } from './i18n.js';
 
-/** Slot the button occupies (host-owned position: after the model selector). */
-export const ACTIVITY_SLOT = 'conversation.input.activity';
+/**
+ * Slot the button occupies. This must stay a `list` slot: `conversation.input
+ * .activity` is single-occupant and already owned by DSH's voice-input button.
+ */
+export const ACTIVITY_SLOT = 'conversation.input.right';
 
 const OPT_STYLE_ID = 'dsh-nonead-prompt-recall-optimize';
 const OPT_SETTINGS_EVENT = 'dsh-nonead-prompt-recall:settings';
@@ -147,7 +155,7 @@ function rememberSnapshot(sessionId, snapshot) {
 }
 
 /**
- * Register the button into the activity slot.
+ * Register the button into its (list) composer slot.
  * @param {any} ctx - client plugin context.
  * @returns {boolean} whether the registration was attempted successfully.
  */
@@ -156,7 +164,6 @@ export function registerOptimizeButton(ctx) {
   if (slots === null || slots === undefined || typeof slots.inject !== 'function' || typeof slots.register !== 'function') {
     return false;
   }
-  ensureOptimizeStyle();
   try {
     slots.inject(ACTIVITY_SLOT, () => slots.register({
       name: ACTIVITY_SLOT,
@@ -260,6 +267,9 @@ function showToastAt(element, text) {
  */
 function OptimizeButton(props) {
   const React = require('react');
+  // The style tag belongs to first render, not registration: apply() must stay
+  // free of DOM writes while DSH is still settling the client roster.
+  ensureOptimizeStyle();
   const conversation = props?.conversation;
   const connection = props?.connection;
   const sessionId = typeof props?.sessionId === 'string' ? props.sessionId : '';
