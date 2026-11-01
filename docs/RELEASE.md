@@ -4,7 +4,7 @@ Run from the repository root on Windows (Node 24) unless noted.
 
 在仓库根目录执行（Windows、Node 24）。
 
-Target version / 目标版本：**v0.7.0**。
+Target version / 目标版本：**v0.8.0**。
 
 ## 1. Pre-flight / 预检
 
@@ -21,10 +21,11 @@ Expected: tests all pass, `lib/client.js is up to date`.
 npm pack --dry-run --cache .tmp\npm-cache
 ```
 
-Expected: **24 files / ~56 KB** unpacked from a clean tree. The tarball must contain exactly these areas — no `src/`, `test/`, `scripts/`,
+Expected: **33 files / ~380 KB** unpacked from a clean tree (~148 KB tarball). The tarball must contain exactly these areas — no `src/`, `test/`, `scripts/`,
 `.github/`, `.tmp/` or project-memory files:
 
 - `lib/` (host + generated client bundle)
+- `assets/icons/` (the four SVG icon sources linked from the design doc)
 - `locale/` (`zh.json`, `en.json`, `ja.json`, `es.json`, `fr.json`, `de.json`, `ru.json`, `pt.json`)
 - `cordis.patch.yml`
 - `README.md`, `README.zh.md`, `CHANGELOG.md`, `LICENSE`, `docs/E2E.md`, `docs/RELEASE.md`
@@ -44,22 +45,25 @@ bundle must load through `window.__ModuleLoader__` and export `apply`.
 
 Restart DSH Desktop, refresh, then check:
 
-- log contains `[dsh-nonead-prompt-recall] host ready v0.7.0`;
-- Settings → 提示词历史 shows the history glyph in the nav, the v0.7.0 header/status layout, and export / import / clear above the list;
+- log contains `[dsh-nonead-prompt-recall] host ready v0.8.0`;
+- Settings → 提示词历史 shows the history glyph in the nav, the v0.8.0 header/status layout, export / import / clear above the list, and the new **Prompt optimization** card (switch + read-only prompt viewer);
 - switch Settings → General → Language across 中文 / English / 日本語 / Español / Français / Deutsch / Русский / Português and confirm the section label, page copy and `/prompt-recall status` follow the selection;
 - empty composer + ↑ recalls the newest prompt, ↑ walks older, ↓ walks back;
 - `/prompt-recall status` responds;
 - 导出 JSON downloads a file; 导入并预览 shows the preview and merges on confirm;
+- **提示词优化**：模型选择器右侧的四角星在空草稿时置灰、有文本时可点；点击后原文不动、成功后替换、返回箭头可撤销；含 `@` 引用的草稿改写后 chip 原位保留；助手流式输出期间仍可用；
+- 设置页把「提示词优化」关掉后四角星立即消失，重新开启后恢复；
+- 查看器展开显示提示词全文、版本、字符数，复制可用且无编辑入口；
 - restart DSH and confirm history and settings survive.
 
 See [E2E.md](./E2E.md) for the full manual matrix (keyboard, command, settings,
-backup paths).
+backup paths, and the 17-step prompt-optimization pass).
 
 ## 5. Publish / 发布
 
-The package is public: [dsh-nonead-prompt-recall](https://www.npmjs.com/package/dsh-nonead-prompt-recall). `0.7.0` is the current release (eight-language UI, `gitHead` bc51957); `0.6.3` added the metadata fix and `0.6.2` was the first version.
+The package is public: [dsh-nonead-prompt-recall](https://www.npmjs.com/package/dsh-nonead-prompt-recall). `0.7.0` is the latest published release (eight-language UI, `gitHead` bc51957); `0.8.0` (prompt optimization, README refresh and the 0.7.1 docs patch rolled together) is prepared and still has to be published. `0.6.3` added the metadata fix and `0.6.2` was the first version.
 
-包已公开发布：当前版本 `0.7.0`（八语言界面，`gitHead` bc51957）；`0.6.3` 修了元数据，`0.6.2` 是首个版本。
+包已公开发布：`0.7.0` 是最新已发布版本（八语言界面，`gitHead` bc51957）；`0.8.0`（提示词优化 + README 头部改版 + 0.7.1 文档补丁合并）已就绪、待发布。`0.6.3` 修了元数据，`0.6.2` 是首个版本。
 
 Prerequisite: `npm login`. This account asks for proof-of-presence on every publish (OTP prompt or the browser URL npm prints), so publishing from a terminal the maintainer controls is the reliable path.
 

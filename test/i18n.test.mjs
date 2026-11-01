@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { DICTS, LOCALES } from '../src/i18n.js';
+import { OPTIMIZE_DICTS } from '../src/i18n-optimize.js';
 import {
   COMMAND_DESCRIPTIONS,
   COMMAND_DICTS,
@@ -104,4 +105,16 @@ test('READMEs cross-link each other', async () => {
   const zh = await readFile(join(ROOT, 'README.zh.md'), 'utf8');
   assert.match(en, /README\.zh\.md/u);
   assert.match(zh, /README\.md/u);
+});
+
+test('optimize strings join every locale without shadowing existing keys', () => {
+  const expected = Object.keys(OPTIMIZE_DICTS.en).sort();
+  assert.equal(expected.length, 24, 'opt key count');
+  for (const key of expected) assert.equal(key.startsWith('opt'), true, `${key}: opt prefix`);
+  for (const locale of LOCALES) {
+    assert.deepEqual(Object.keys(OPTIMIZE_DICTS[locale]).sort(), expected, `${locale}: key set`);
+    for (const key of expected) {
+      assert.equal(DICTS[locale][key], OPTIMIZE_DICTS[locale][key], `${locale}.${key}: merged`);
+    }
+  }
 });

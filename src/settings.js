@@ -64,6 +64,13 @@ const CSS = `
 .dsh-pr-preview{margin-top:12px;border:1px solid var(--dsw-alias-border-l2);border-radius:10px;padding:12px;background:var(--dsw-alias-bg-layer-2)}
 .dsh-pr-preview-title{font-weight:600;margin-bottom:4px}
 .dsh-pr-callout{border:1px dashed var(--dsw-alias-border-l2);border-radius:10px;padding:10px 12px;color:var(--dsw-alias-label-secondary);font-size:12px}
+.dsh-pr-viewer{margin-top:12px;border:1px solid var(--dsw-alias-border-l2);border-radius:10px;overflow:hidden}
+.dsh-pr-viewer-head{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:8px 12px;background:var(--dsw-alias-bg-layer-2)}
+.dsh-pr-viewer-title{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;min-width:0}
+.dsh-pr-viewer-actions{display:flex;align-items:center;gap:6px;flex:none}
+.dsh-pr-pre{margin:0;padding:12px;max-height:320px;overflow:auto;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-1);border-top:1px solid var(--dsw-alias-border-l2)}
+.dsh-pr-pre:focus-visible{outline:2px solid var(--dsw-alias-border-focus);outline-offset:-2px}
+.dsh-pr-viewer-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;color:var(--dsw-alias-label-tertiary);font-size:11px;border-top:1px solid var(--dsw-alias-border-l2)}
 `;
 
 // Visual polish layer (overrides the base rules above) plus the settings-nav
@@ -219,6 +226,10 @@ function SettingsSection(props) {
   const [note, setNote] = React.useState(null);
   const [confirmClear, setConfirmClear] = React.useState(false);
   const [preview, setPreview] = React.useState(null);
+  /** Read-only model prompt (§5.3): null until the viewer is opened once. */
+  const [promptInfo, setPromptInfo] = React.useState(null);
+  const [promptOpen, setPromptOpen] = React.useState(false);
+  const [promptCopied, setPromptCopied] = React.useState(false);
   const fileInput = React.useRef(null);
 
   const cwd = React.useRef('');
@@ -251,6 +262,21 @@ function SettingsSection(props) {
 
   const setField = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
+  /** Flip one field inside the nested `optimize` block, keeping `maxChars`. */
+  const setOptimize = (enabled) => setForm((current) => ({
+    ...current,
+    optimize: { ...(current.optimize ?? {}), enabled },
+  }));
+
+  /** Tell the composer button a settings write landed (it re-reads them). */
+  const announceSettings = () => {
+    try {
+      window.dispatchEvent(new CustomEvent('dsh-nonead-prompt-recall:settings'));
+    } catch {
+      /* a bare test document has no CustomEvent */
+    }
+  };
+
   const run = async (key, action, success) => {
     setBusy(key);
     setNote(null);
@@ -271,11 +297,40 @@ function SettingsSection(props) {
         enabled: form.enabled === true,
         maxEntries: Number(form.maxEntries),
         retentionDays: Number(form.retentionDays),
+        optimize: {
+          enabled: form.optimize?.enabled !== false,
+          maxChars: Number(form.optimize?.maxChars) > 0 ? Number(form.optimize.maxChars) : 8000,
+        },
       },
     });
     setView((current) => (current === null ? current : { ...current, settings: value.settings }));
     setForm(value.settings);
+    announceSettings();
   }, t('saved'));
+
+  /** Open the read-only prompt viewer and fetch its text once. */
+  const togglePrompt = async () => {
+    const next = !promptOpen;
+    setPromptOpen(next);
+    if (!next || promptInfo !== null) return;
+    try {
+      const value = await call('optimize.prompt', {});
+      setPromptInfo(value);
+    } catch (error) {
+      setNote({ tone: 'error', text: t('failed', { message: error instanceof Error ? error.message : String(error) }) });
+    }
+  };
+
+  const copyPrompt = async () => {
+    if (promptInfo === null) return;
+    try {
+      await navigator.clipboard.writeText(promptInfo.prompt);
+      setPromptCopied(true);
+      setTimeout(() => setPromptCopied(false), 1_500);
+    } catch {
+      /* clipboard permissions denied: keep the viewer usable */
+    }
+  };
 
   // Same download primitive the host backup page uses: Blob + <a download>.
   const download = (filename, content) => {
@@ -350,10 +405,12 @@ function SettingsSection(props) {
     enabled: form.enabled,
     maxEntries: String(form.maxEntries),
     retentionDays: String(form.retentionDays),
+    optimize: form.optimize?.enabled !== false,
   }) !== JSON.stringify({
     enabled: view.settings.enabled,
     maxEntries: String(view.settings.maxEntries),
     retentionDays: String(view.settings.retentionDays),
+    optimize: view.settings.optimize?.enabled !== false,
   });
   const maxValue = Number(form.maxEntries);
   const keepValue = Number(form.retentionDays);
@@ -427,6 +484,47 @@ function SettingsSection(props) {
       h('div', { className: 'dsh-pr-actions' },
         h('button', { type: 'button', className: 'dsh-pr-btn dsh-pr-btn-primary', disabled: !dirty || !valid || busy === 'save', onClick: save }, busy === 'save' ? '…' : t('save')),
         h('span', { className: 'dsh-pr-note' + (valid ? '' : ' is-error') }, valid ? (dirty ? t('dirty') : t('saved')) : t('invalid'))),
+    ),
+    h('section', { className: 'dsh-pr-card' },
+      h('div', { className: 'dsh-pr-section-title' }, h('b', null, t('optTitle')), h('span', null, t('optHint'))),
+      h('div', { className: 'dsh-pr-row' },
+        h('div', { className: 'dsh-pr-rowtext' },
+          h('div', { className: 'dsh-pr-label' }, t('optToggle')),
+          h('div', { className: 'dsh-pr-hint' }, t('optToggleHint'))),
+        h('button', {
+          type: 'button',
+          role: 'switch',
+          'aria-checked': form.optimize?.enabled !== false,
+          className: `dsh-pr-switch${form.optimize?.enabled !== false ? ' is-on' : ''}`,
+          onClick: () => setOptimize(form.optimize?.enabled === false),
+        }, h('span', { className: 'dsh-pr-knob' }))),
+      h('div', { className: 'dsh-pr-viewer' },
+        h('div', { className: 'dsh-pr-viewer-head' },
+          h('button', {
+            type: 'button',
+            className: 'dsh-pr-btn',
+            'aria-expanded': promptOpen ? 'true' : 'false',
+            'aria-controls': 'dsh-pr-opt-prompt',
+            onClick: () => { void togglePrompt(); },
+          }, `${promptOpen ? '▾' : '▸'} ${t('optPromptTitle')}`),
+          h('div', { className: 'dsh-pr-viewer-actions' },
+            h('span', { className: 'dsh-pr-badge' }, promptInfo === null ? 'v1' : t('optPromptVersion', { version: promptInfo.version })),
+            h('button', {
+              type: 'button',
+              className: 'dsh-pr-btn',
+              disabled: promptInfo === null,
+              'aria-live': 'polite',
+              onClick: () => { void copyPrompt(); },
+            }, promptCopied ? t('optPromptCopied') : t('optPromptCopy')))),
+        promptOpen
+          ? h('pre', { id: 'dsh-pr-opt-prompt', className: 'dsh-pr-pre', tabIndex: 0, 'aria-label': t('optPromptTitle') },
+            promptInfo === null ? t('loading') : promptInfo.prompt)
+          : null,
+        promptOpen && promptInfo !== null
+          ? h('div', { className: 'dsh-pr-viewer-foot' },
+            h('span', null, t('optPromptChars', { count: promptInfo.chars })),
+            h('span', null, t('optPromptHint')))
+          : null),
     ),
     h('section', { className: 'dsh-pr-card' },
       h('div', { className: 'dsh-pr-section-title' }, h('b', null, t('historyTitle')), h('span', null, t('historyHint'))),

@@ -4,11 +4,11 @@
 
 [![npm version](https://img.shields.io/npm/v/dsh-nonead-prompt-recall.svg?logo=npm&logoColor=white&label=npm)](https://www.npmjs.com/package/dsh-nonead-prompt-recall) [![npm downloads](https://img.shields.io/npm/dm/dsh-nonead-prompt-recall.svg?logo=npm&logoColor=white&label=downloads)](https://www.npmjs.com/package/dsh-nonead-prompt-recall) [![CI](https://img.shields.io/github/actions/workflow/status/NoneadChina/dsh-nonead-prompt-recall/ci.yml?branch=main&label=CI&logo=github)](https://github.com/NoneadChina/dsh-nonead-prompt-recall/actions) [![tag](https://img.shields.io/github/v/tag/NoneadChina/dsh-nonead-prompt-recall?label=tag&logo=git&logoColor=white)](https://github.com/NoneadChina/dsh-nonead-prompt-recall/tags) [![stars](https://img.shields.io/github/stars/NoneadChina/dsh-nonead-prompt-recall?logo=github)](https://github.com/NoneadChina/dsh-nonead-prompt-recall/stargazers) [![license](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
-[![node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org) [![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.1-4B6BFB)](./docs/RELEASE.md) [![tests](https://img.shields.io/badge/tests-75%20passing-brightgreen)](./test) [![languages](https://img.shields.io/badge/languages-8-8A2BE2)](./locale) [![platform](https://img.shields.io/badge/platform-DSH%20web-2F6FEB)](./package.json)
+[![node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org) [![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.1-4B6BFB)](./docs/RELEASE.md) [![tests](https://img.shields.io/badge/tests-122%20passing-brightgreen)](./test) [![languages](https://img.shields.io/badge/languages-8-8A2BE2)](./locale) [![platform](https://img.shields.io/badge/platform-DSH%20web-2F6FEB)](./package.json)
 
 A DeepSeek Harness plugin that gives the composer shell-style **prompt history recall**.
 
-Current version: **0.7.0**.
+Current version: **0.8.0**.
 
 - Press **↑** in an empty composer to load the last prompt you sent;
 - press **↑** again to walk further back;
@@ -18,7 +18,7 @@ Current version: **0.7.0**.
 
 ## Contents
 
-- [Behavior](#behavior) · [Install](#install) · [Verify](#verify) · [Settings page](#settings-page)
+- [Behavior](#behavior) · [Install](#install) · [Verify](#verify) · [Settings page](#settings-page) · [Prompt optimization](#prompt-optimization)
 - [Commands](#commands) · [Data layout](#data-layout) · [Architecture](#architecture) · [Localization](#localization)
 - [Development](#development) · [Documentation](#documentation) · [Compatibility](#compatibility)
 
@@ -103,6 +103,18 @@ Open **Settings → 提示词历史** (the row is localized; an English UI reads
 - **History** — export / import / clear sit above the recent list, so they stay reachable in a short window; the list shows the five newest prompts for the current workspace.
 
 Export downloads a timestamped JSON file through the browser. Import opens a file picker, parses the JSON in the page (8MB / 20,000-entry limits) and shows the file name, entry count, source workspace and the first five prompts before you confirm the merge.
+
+## Prompt optimization
+
+Since 0.8.0 a sparkle button sits between the model selector and the Send button.
+
+- It rewrites the current draft with the session model; **you** review and send it — the plugin never sends, never clears the composer early, and never writes to your prompt history.
+- While the request runs the draft stays visible; only a successful rewrite replaces it, exactly once. Failures, timeouts, cancellation, or a draft you edited in the meantime leave your input untouched.
+- `@` references are preserved: every chip is masked as a `⟦C1⟧` sentinel before the model call and re-inserted at its new position only if the model kept every sentinel in order — reference content never reaches the model.
+- Attachments and images neither block nor take part in the rewrite; the button is disabled only when the text segment is empty or longer than 8000 characters.
+- After a successful rewrite the icon becomes an undo arrow; one click restores the original draft (references included). Editing or sending drops that undo.
+- Turns do not collide: optimization is an independent auxiliary call, so it works while an answer is streaming, and cancelling it never stops the answer.
+- Settings → 提示词历史 → **Prompt optimization** hides the button or shows the built-in prompt read-only (version, character count, copy).
 
 ## Commands
 

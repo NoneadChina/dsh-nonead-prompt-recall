@@ -8,3 +8,6 @@ export const COMPOSER_SELECTOR = '[data-composer-input]';
 
 /** DSH settings slot that renders plugin sections in the settings dialog. */
 export const SETTINGS_SECTION = 'settings.section';
+
+/** RPC endpoint that rewrites one draft (0.8.0 prompt optimization). */
+export const ENDPOINT_OPTIMIZE = 'optimize';

@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Histórico de prompts",
-    "description": "Histórico do compositor para o DeepSeek Harness: pressione ↑ com a caixa vazia para recuperar o prompt anterior, ↑ de novo para ir mais atrás e ↓ para voltar; o histórico é salvo por espaço de trabalho e sobrevive a reinicializações. Gerencie captura, limites, retenção e exportação/importação com /prompt-recall ou Configurações → Histórico de prompts."
+    "description": "Histórico do compositor para o DeepSeek Harness: pressione ↑ com a caixa vazia para recuperar o prompt anterior, ↑ de novo para ir mais atrás e ↓ para voltar; o histórico é salvo por espaço de trabalho e sobrevive a reinicializações. Gerencie captura, limites, retenção e exportação/importação com /prompt-recall ou Configurações → Histórico de prompts. Desde a 0.8.0, o botão de estrela ao lado do seletor de modelo reescreve o rascunho e preserva as referências @; o resultado volta ao compositor e quem envia é você."
   }
 }

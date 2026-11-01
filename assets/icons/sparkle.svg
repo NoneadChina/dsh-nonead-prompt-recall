@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="none">
+  <!-- Four-point star (prompt optimize): sharp, monoline, 1.25 stroke on a 16 grid. -->
+  <path d="M8 1.6 9.7 6.3 14.4 8 9.7 9.7 8 14.4 6.3 9.7 1.6 8 6.3 6.3Z"
+        stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

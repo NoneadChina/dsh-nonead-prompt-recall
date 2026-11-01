@@ -5,7 +5,12 @@
  * The dictionary object is keyed by lowercase language id so it can go straight
  * into `ctx.locale.register(ns, DICTS)`; zh and en are the required baselines.
  * Keep every locale on the same key set — `test/i18n.test.mjs` enforces it.
+ *
+ * The prompt-optimization keys live in `./i18n-optimize.js` and are merged into
+ * `DICTS` below, so both halves share one registered dictionary.
  */
+
+import { OPTIMIZE_DICTS } from './i18n-optimize.js';
 
 export const LOCALES = ['zh', 'en', 'ja', 'es', 'fr', 'de', 'ru', 'pt'];
 
@@ -411,3 +416,11 @@ export const DICTS = {
     version: 'Versão',
   },
 };
+
+
+// Prompt-optimization keys (src/i18n-optimize.js) join the same dictionary so
+// one ctx.locale.register() call covers the settings page and the composer.
+for (const locale of LOCALES) {
+  const extra = OPTIMIZE_DICTS[locale];
+  if (extra !== undefined) Object.assign(DICTS[locale], extra);
+}

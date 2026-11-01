@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>提示词优化图标 · Prompt Optimize Icons</title>
+<style>
+  :root {
+    --ink: #111111;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --hover: #f3f4f6;
+    --disabled: #c9ccd1;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 40px 48px 56px;
+    background: #ffffff;
+    color: var(--ink);
+    font: 14px/1.5 -apple-system, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 4px; }
+  h2 { font-size: 13px; font-weight: 600; letter-spacing: .02em; color: var(--muted);
+       margin: 36px 0 12px; text-transform: uppercase; }
+  p.sub { margin: 0; color: var(--muted); }
+  .row { display: flex; align-items: flex-end; gap: 34px; flex-wrap: wrap; }
+  .cell { text-align: center; }
+  .cell .art { height: 56px; display: flex; align-items: center; justify-content: center; }
+  .cell .cap { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .name { font-size: 13px; font-weight: 600; margin: 0 0 10px; }
+  .pairbox { border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; display: inline-block; }
+  .pairbox .row { gap: 18px; }
+  .states { display: flex; gap: 14px; flex-wrap: wrap; }
+  .state { display: flex; align-items: center; gap: 10px; }
+  .btn { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center;
+         justify-content: center; color: var(--ink); }
+  .btn:hover { background: var(--hover); }
+  .btn.disabled { color: var(--disabled); }
+  .state small { color: var(--muted); font-size: 11px; }
+  .composer { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px;
+              display: flex; align-items: center; gap: 12px; max-width: 720px; }
+  .draft { flex: 1; color: #374151; font-size: 13px; }
+  .seat { display: flex; align-items: center; gap: 8px; }
+  .pill { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line);
+          border-radius: 999px; padding: 3px 9px; font-size: 11px; color: #374151; }
+  .send { width: 28px; height: 28px; border-radius: 999px; background: var(--ink); color: #fff;
+          display: flex; align-items: center; justify-content: center; }
+  .dark { background: #16181d; border-radius: 14px; padding: 14px 16px; display: inline-flex;
+          align-items: center; gap: 14px; margin-top: 12px; color: #f3f4f6; }
+  .dark .btn:hover { background: #24262d; }
+  .legend { color: var(--muted); font-size: 12px; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<h1>提示词优化 · 图标设计</h1>
+<p class="sub">简约白底黑线 · 16px 网格 · 1.25px 线性描边 · 圆角端点 · <code>currentColor</code>（自动适配明暗主题）</p>
+
+<h2>主方案</h2>
+<div class="pairbox">
+  <div class="row">
+    <div class="cell">
+      <div class="art">
+        <svg width="48" height="48" viewBox="0 0 16 16" fill="none" aria-label="提示词优化">
+          <path d="M8 1.6 9.7 6.3 14.4 8 9.7 9.7 8 14.4 6.3 9.7 1.6 8 6.3 6.3Z"
+                stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="cap">48px</div>
+    </div>
+    <div class="cell">
+      <div class="art">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 1.6 9.7 6.3 14.4 8 9.7 9.7 8 14.4 6.3 9.7 1.6 8 6.3 6.3Z"
+                stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="cap">16px</div>
+    </div>
+    <div class="cell">
+      <div class="art">
+        <svg width="48" height="48" viewBox="0 0 16 16" fill="none" aria-label="还原原文">
+          <path d="M12.8 11.6c0-3.3-2.6-5.2-6.2-5.2H3.4" stroke="currentColor" stroke-width="1.25"
+                stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6.2 3.6 3.2 6.4l3 2.8" stroke="currentColor" stroke-width="1.25"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="cap">48px</div>
+    </div>
+    <div class="cell">
+      <div class="art">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M12.8 11.6c0-3.3-2.6-5.2-6.2-5.2H3.4" stroke="currentColor" stroke-width="1.25"
+                stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6.2 3.6 3.2 6.4l3 2.8" stroke="currentColor" stroke-width="1.25"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="cap">16px</div>
+    </div>
+  </div>
+  <div class="legend">左：四角星（提示词优化） · 右：返回箭头（还原原文，推荐）</div>
+</div>
+
+<h2>备选</h2>
+<div class="pairbox">
+  <div class="row">
+    <div class="cell">
+      <div class="art">
+        <svg width="48" height="48" viewBox="0 0 16 16" fill="none">
+          <path d="M8 1.6C8.7 5.6 10.4 7.3 14.4 8 10.4 8.7 8.7 10.4 8 14.4 7.3 10.4 5.6 8.7 1.6 8 5.6 7.3 7.3 5.6 8 1.6Z"
+                stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="cap">四角星 B：内凹弧线</div>
+    </div>
+    <div class="cell">
+      <div class="art">
+        <svg width="48" height="48" viewBox="0 0 16 16" fill="none">
+          <path d="M2 8a6 6 0 1 0 6-6 6.5 6.5 0 0 0-4.49 1.83L2 5.33" stroke="currentColor"
+                stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 2v3.33h3.33" stroke="currentColor" stroke-width="1.25"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="cap">撤销 B：旋转式回退</div>
+    </div>
+  </div>
+  <div class="legend">B 版更圆润；旋转式回退在部分图标集里与「刷新/重新生成」相近，故仅作备选。</div>
+</div>
+
+<h2>尺寸阶梯</h2>
+<div class="row">
+  <div class="cell"><div class="art">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.6 9.7 6.3 14.4 8 9.7 9.7 8 14.4 6.3 9.7 1.6 8 6.3 6.3Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></svg>
+  </div><div class="cap">16</div></div>
+  <div class="cell"><div class="art">
+    <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><path d="M8 1.6 9.7 6.3 14.4 8 9.7 9.7 8 14.4 6.3 9.7 1.6 8 6.3 6.3Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></svg>
+  </div><div class="cap">20</div></div>
+  <div class="cell"><div class="art">
+    <svg width="24" height="24" viewBox="0 0 16 16" fill="none"><path d="M8 1.6 9.7 6.3 14.4 8 9.7 9.7 8 14.4 6.3 9.7 1.6 8 6.3 6.3Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></svg>
+  </div><div class="cap">24</div></div>
+  <div class="cell"><div class="art">
+    <svg width="32" height="32" viewBox="0 0 16 16" fill="none"><path d="M8 1.6 9.7 6.3 14.4 8 9.7 9.7 8 14.4 6.3 9.7 1.6 8 6.3 6.3Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></svg>
+  </div><div class="cap">32</div></div>
+  <div class="cell"><div class="art">
+    <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><path d="M12.8 11.6c0-3.3-2.6-5.2-6.2-5.2H3.4" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/><path d="M6.2 3.6 3.2 6.4l3 2.8" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div><div class="cap">20</div></div>
+  <div class="cell"><div class="art">
+    <svg width="24" height="24" viewBox="0 0 16 16" fill="none"><path d="M12.8 11.6c0-3.3-2.6-5.2-6.2-5.2H3.4" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/><path d="M6.2 3.6 3.2 6.4l3 2.8" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div><div class="cap">24</div></div>
+  <div class="cell"><div class="art">
+    <svg width="32" height="32" viewBox="0 0 16 16" fill="none"><path d="M12.8 11.6c0-3.3-2.6-5.2-6.2-5.2H3.4" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/><path d="M6.2 3.6 3.2 6.4l3 2.8" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div><div class="cap">32</div></div>
+</div>
+
+<h2>状态</h2>
+<div class="states">
+  <div class="state">
+    <div class="btn">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.6 9.7 6.3 14.4 8 9.7 9.7 8 14.4 6.3 9.7 1.6 8 6.3 6.3Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></svg>
+    </div><small>可用</small>
+  </div>
+  <div class="state">
+    <div class="btn" style="background: var(--hover);">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.6 9.7 6.3 14.4 8 9.7 9.7 8 14.4 6.3 9.7 1.6 8 6.3 6.3Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></svg>
+    </div><small>悬停</small>
+  </div>
+  <div class="state">
+    <div class="btn disabled">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.6 9.7 6.3 14.4 8 9.7 9.7 8 14.4 6.3 9.7 1.6 8 6.3 6.3Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></svg>
+    </div><small>空输入（禁用）</small>
+  </div>
+  <div class="state">
+    <div class="btn">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="animation: spin 1s linear infinite;">
+        <path d="M8 1.6 9.7 6.3 14.4 8 9.7 9.7 8 14.4 6.3 9.7 1.6 8 6.3 6.3Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>
+      </svg>
+    </div><small>优化中（旋转）</small>
+  </div>
+  <div class="state">
+    <div class="btn">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12.8 11.6c0-3.3-2.6-5.2-6.2-5.2H3.4" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/><path d="M6.2 3.6 3.2 6.4l3 2.8" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div><small>可还原</small>
+  </div>
+</div>
+
+<h2>输入框示意</h2>
+<div class="composer">
+  <div class="draft">帮我把这段 Python 改成 async，并保留错误处理…</div>
+  <div class="seat">
+    <div class="btn" title="提示词优化">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.6 9.7 6.3 14.4 8 9.7 9.7 8 14.4 6.3 9.7 1.6 8 6.3 6.3Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="pill"><span>DeepSeek V4</span><span style="color:#9ca3af;">▾</span></div>
+    <div class="btn" title="语音输入">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="6.2" y="2.2" width="3.6" height="7" rx="1.8" stroke="currentColor" stroke-width="1.25"/>
+        <path d="M4 7.4a4 4 0 0 0 8 0M8 11.4v2.2" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="send">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 12.4V3.6M4.4 7 8 3.4 11.6 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+</div>
+<div class="legend">星形位于模型选择器与麦克风之间；可还原时星形替换为返回箭头，位置与命中区不变。</div>
+
+<h2>深色主题（同一套路径，currentColor 自动跟随）</h2>
+<div class="dark">
+  <div class="btn" style="color:#f3f4f6;">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.6 9.7 6.3 14.4 8 9.7 9.7 8 14.4 6.3 9.7 1.6 8 6.3 6.3Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></svg>
+  </div>
+  <div class="btn" style="color:#f3f4f6;">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12.8 11.6c0-3.3-2.6-5.2-6.2-5.2H3.4" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/><path d="M6.2 3.6 3.2 6.4l3 2.8" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <small style="color:#9ca3af;">深色下保持线宽 1.25，颜色取正文色；不使用纯白填充</span></small>
+</div>
+
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+</body>
+</html>

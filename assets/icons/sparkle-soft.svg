@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="none">
+  <!-- Soft four-point star variant: concave sides, same 16 grid and stroke. -->
+  <path d="M8 1.6C8.7 5.6 10.4 7.3 14.4 8 10.4 8.7 8.7 10.4 8 14.4 7.3 10.4 5.6 8.7 1.6 8 5.6 7.3 7.3 5.6 8 1.6Z"
+        stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

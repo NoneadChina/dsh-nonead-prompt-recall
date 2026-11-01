@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Historique des prompts",
-    "description": "Historique du compositeur pour DeepSeek Harness : appuyez sur ↑ dans une zone de saisie vide pour rappeler le prompt précédent, ↑ encore pour remonter plus loin, ↓ pour revenir ; l’historique est conservé par espace de travail et survit aux redémarrages. Gérez la capture, les limites, la rétention et l’export/import avec /prompt-recall ou Réglages → Historique des prompts."
+    "description": "Historique du compositeur pour DeepSeek Harness : appuyez sur ↑ dans une zone de saisie vide pour rappeler le prompt précédent, ↑ encore pour remonter plus loin, ↓ pour revenir ; l’historique est conservé par espace de travail et survit aux redémarrages. Gérez la capture, les limites, la rétention et l’export/import avec /prompt-recall ou Réglages → Historique des prompts. Depuis 0.8.0, le bouton étoile à côté du sélecteur de modèle réécrit le brouillon en conservant les références @ ; le résultat revient dans le compositeur et c’est vous qui l’envoyez."
   }
 }

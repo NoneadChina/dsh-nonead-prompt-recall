@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Prompt-Verlauf",
-    "description": "Prompt-Verlauf für DeepSeek Harness: Mit ↑ im leeren Eingabefeld den letzten Prompt abrufen, erneut ↑ für ältere, ↓ führt zurück; pro Arbeitsbereich gespeichert und übersteht Neustarts. Erfassung, Limits, Aufbewahrung und Export/Import über /prompt-recall oder Einstellungen → Prompt-Verlauf verwalten."
+    "description": "Prompt-Verlauf für DeepSeek Harness: Mit ↑ im leeren Eingabefeld den letzten Prompt abrufen, erneut ↑ für ältere, ↓ führt zurück; pro Arbeitsbereich gespeichert und übersteht Neustarts. Erfassung, Limits, Aufbewahrung und Export/Import über /prompt-recall oder Einstellungen → Prompt-Verlauf verwalten. Seit 0.8.0 schreibt die Funken-Schaltfläche neben der Modellauswahl den Entwurf um und behält @-Referenzen bei; das Ergebnis landet nur im Eingabefeld, gesendet wird von Ihnen."
   }
 }

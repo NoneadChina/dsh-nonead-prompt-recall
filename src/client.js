@@ -17,6 +17,7 @@
 import { decideNav, draftText } from './core.js';
 import { CHANNEL, COMPOSER_SELECTOR } from './protocol.js';
 import { registerSettingsSection } from './settings.js';
+import { registerOptimizeButton } from './optimize-button.js';
 
 export const name = 'dsh-nonead-prompt-recall';
 export const inject = ['sessions', 'slots', 'locale', 'connection'];
@@ -289,6 +290,14 @@ export function apply(ctx) {
     registerSettingsSection(ctx);
   } catch {
     /* the keyboard bridge must keep working even if the settings page fails */
+  }
+
+  // Composer optimize button (conversation.input.activity slot). Same rule:
+  // a missing slot service only hides the button.
+  try {
+    registerOptimizeButton(ctx);
+  } catch {
+    /* the keyboard bridge must keep working even if the button fails */
   }
 
   const dispose = () => {

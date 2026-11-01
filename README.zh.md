@@ -4,11 +4,11 @@
 
 [![npm version](https://img.shields.io/npm/v/dsh-nonead-prompt-recall.svg?logo=npm&logoColor=white&label=npm)](https://www.npmjs.com/package/dsh-nonead-prompt-recall) [![npm downloads](https://img.shields.io/npm/dm/dsh-nonead-prompt-recall.svg?logo=npm&logoColor=white&label=downloads)](https://www.npmjs.com/package/dsh-nonead-prompt-recall) [![CI](https://img.shields.io/github/actions/workflow/status/NoneadChina/dsh-nonead-prompt-recall/ci.yml?branch=main&label=CI&logo=github)](https://github.com/NoneadChina/dsh-nonead-prompt-recall/actions) [![tag](https://img.shields.io/github/v/tag/NoneadChina/dsh-nonead-prompt-recall?label=tag&logo=git&logoColor=white)](https://github.com/NoneadChina/dsh-nonead-prompt-recall/tags) [![stars](https://img.shields.io/github/stars/NoneadChina/dsh-nonead-prompt-recall?logo=github)](https://github.com/NoneadChina/dsh-nonead-prompt-recall/stargazers) [![license](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
-[![node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org) [![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.1-4B6BFB)](./docs/RELEASE.md) [![tests](https://img.shields.io/badge/tests-75%20passing-brightgreen)](./test) [![languages](https://img.shields.io/badge/languages-8-8A2BE2)](./locale) [![platform](https://img.shields.io/badge/platform-DSH%20web-2F6FEB)](./package.json)
+[![node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org) [![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.1-4B6BFB)](./docs/RELEASE.md) [![tests](https://img.shields.io/badge/tests-122%20passing-brightgreen)](./test) [![languages](https://img.shields.io/badge/languages-8-8A2BE2)](./locale) [![platform](https://img.shields.io/badge/platform-DSH%20web-2F6FEB)](./package.json)
 
 DeepSeek Harness 插件：给输入框加上 shell 风格的**提示词历史召回**。
 
-当前版本：**0.7.0**。
+当前版本：**0.8.0**。
 
 - 输入框为空时按 **↑**：载入上一条提交过的提示词；
 - 再按 **↑**：继续向前载入更早的一条；
@@ -18,7 +18,7 @@ DeepSeek Harness 插件：给输入框加上 shell 风格的**提示词历史召
 
 ## 目录
 
-- [行为细节](#行为细节) · [安装](#安装) · [验证](#验证) · [设置页面](#设置页面)
+- [行为细节](#行为细节) · [安装](#安装) · [验证](#验证) · [设置页面](#设置页面) · [提示词优化](#提示词优化)
 - [命令](#命令) · [数据位置](#数据位置) · [架构](#架构) · [本地化](#本地化)
 - [开发](#开发) · [文档](#文档) · [兼容性](#兼容性)
 
@@ -103,6 +103,18 @@ dsh plugin --profile <profile-name> add "file:D:/MyProgram/GitHub/dsh-nonead-pro
 - **历史管理**：导出 / 导入 / 清空放在最近列表**之前**，窗口较矮时也能触达；列表展示当前工作区最近 5 条提示词。
 
 导出会通过浏览器下载带时间戳的 JSON；导入通过文件选择器读取，在页面内解析（上限 8MB / 20000 条）并显示文件名、条数、来源工作区与前 5 条，确认后才合并。
+
+## 提示词优化
+
+0.8.0 起，模型选择器与发送键之间多了一个四角星按钮。
+
+- 它用当前会话模型改写输入框里的草稿，**结果由你自己确认并发送**——插件不代发、不提前清空输入框、也不写入提示词历史。
+- 请求期间草稿保持可见；只有成功才替换，且只替换一次。失败、超时、取消、或期间你改了草稿，输入框一律保持不变。
+- `@` 引用原样保留：发送前把每个 chip 遮罩成 `⟦C1⟧` 哨兵，只有模型按原顺序保留全部哨兵时，才把 chip 写回新位置——引用内容不会进入模型输入。
+- 附件与图片既不禁用也不参与改写；只有文本段为空或超过 8000 字符时才禁用按钮。
+- 改写成功后图标变为返回箭头，点一次即可还原原文（含引用）；编辑或发送后撤销作废。
+- 与回答互不阻塞：优化是独立的辅助调用，助手正在输出时照常可用，取消优化也不会停止回答。
+- 设置 → 提示词历史 → **提示词优化** 可关闭按钮，或只读查看内置提示词（版本、字符数、复制）。
 
 ## 命令
 

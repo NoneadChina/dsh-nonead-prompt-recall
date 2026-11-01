@@ -50,6 +50,8 @@ function makeHost(options = {}) {
     },
     get(service) {
       if (service === 'settings' && options.settings) return options.settings;
+      if (service === 'llm' && options.llm) return options.llm;
+      if (service === 'agents' && options.agents) return options.agents;
       return undefined;
     },
     effect() {},
@@ -440,4 +442,54 @@ test('RPC export returns a browser-download payload', async (t) => {
   const bad = await handler('history.importPayload', { cwd, entries: 'nope' });
   assert.equal(bad.ok, false);
   assert.match(bad.error.code, /bad-request/u);
+});
+test('RPC optimize calls the host model with the session route', async (t) => {
+  const home = await mkdtemp(join(tmpdir(), 'prompt-recall-rpc-'));
+  const previous = process.env.DSH_HOME;
+  process.env.DSH_HOME = home;
+  t.after(async () => {
+    if (previous === undefined) delete process.env.DSH_HOME;
+    else process.env.DSH_HOME = previous;
+    await sleep(75);
+    await rm(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  });
+
+  const calls = [];
+  const llm = {
+    stream(request) {
+      calls.push(request);
+      return (async function* replay() {
+        yield { type: 'text-delta', index: 0, text: '把下面这段代码改写成 async/await 形式，行为保持不变。' };
+        yield { type: 'finish', reason: { kind: 'stop' } };
+      })();
+    },
+  };
+  const agents = {
+    get(id) {
+      if (id !== 'session-opt') return undefined;
+      return { session: { requestContext: () => ({ provider: 'deepseek-official', model: 'deepseek-v4-flash' }) } };
+    },
+  };
+
+  const { apply } = await import('../lib/index.js');
+  const host = makeHost({ llm, agents });
+  apply(host.ctx);
+  const { handler } = host.rpc();
+
+  const result = await handler('optimize', { sessionId: 'session-opt', text: '帮我把这段代码改成 async' });
+  assert.equal(result.ok, true, result.error?.message);
+  assert.equal(result.value.status, 'ok');
+  assert.equal(result.value.model, 'deepseek-v4-flash');
+  assert.equal(calls[0].provider, 'deepseek-official');
+  assert.equal(calls[0].model, 'deepseek-v4-flash');
+
+  const empty = await handler('optimize', { sessionId: 'session-opt', text: '   ' });
+  assert.equal(empty.ok, false);
+  assert.match(empty.error.code, /optimize-bad-request/u);
+
+  const prompt = await handler('optimize.prompt', {});
+  assert.equal(prompt.ok, true);
+  assert.equal(prompt.value.version, 1);
+  assert.match(prompt.value.prompt, /You are a prompt editor/u);
+  assert.equal(prompt.value.chars, prompt.value.prompt.length);
 });

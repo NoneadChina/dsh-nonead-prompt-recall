@@ -6,6 +6,49 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 本文件记录所有值得注意的改动，格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.8.0] - 2026-11-01
+
+### Added / 新增
+
+- **Prompt optimization**: a sparkle button sits between the model selector and Send (`conversation.input.activity`). Clicking it rewrites the composer draft with the session model; the original stays visible while the request runs, a successful rewrite replaces it exactly once, and nothing is sent for you — the result waits in the composer.
+- **提示词优化**：模型选择器与发送键之间新增四角星按钮（`conversation.input.activity` 插槽）。点击后用当前会话模型改写输入框草稿；请求期间原文保持可见，成功才替换一次，绝不代你发送，结果停在输入框等你自己按发送。
+- `@` reference chips are masked as `⟦C1⟧` sentinels so their content never reaches the model; the response is validated (count and order) and the chips are re-inserted at their new offsets, or the whole result is discarded with a toast.
+- `@` 引用以 `⟦C1⟧` 哨兵遮罩后不进入模型输入；响应按数量与顺序校验，通过才把 chip 写回新位置，否则整次结果作废并提示。
+- Attachments and images neither block the action nor participate in the rewrite; the button is disabled only when the text segment is empty or longer than 8000 characters.
+- 附件与图片既不禁用也不参与改写；只有文本段为空或超过 8000 字符时才禁用按钮。
+- Undo: after a successful rewrite the icon becomes an undo arrow and restores the original draft (references included) once; editing or sending discards the snapshot.
+- 撤销：改写成功后图标变为返回箭头，可一次性还原原文（含引用）；编辑或发送即作废快照。
+- New read-only RPC `optimize.prompt` serves the built-in model prompt with its version and character count.
+- 新增只读 RPC `optimize.prompt`，返回内置模型提示词、版本号与字符数。
+
+### Changed / 变更
+
+- Settings → 提示词历史 gains a **Prompt optimization** card: an enable switch (default on) and a read-only prompt viewer (version badge, character count, copy). Saving re-reads the setting in the composer without a page refresh.
+- 设置 → 提示词历史新增「提示词优化」卡片：启用开关（默认开）与只读提示词查看器（版本、字符数、复制）；保存后输入框无需刷新即生效。
+- The optimization runs as an independent auxiliary model call: it does not join the conversation turn queue, so it stays available while an answer is streaming, and cancelling one never stops the other.
+- 优化是一次独立的辅助模型调用，不进会话回合队列：助手正在输出时照常可用，取消优化不会停止回答。
+- Optimization copy ships in all eight languages (`src/i18n-optimize.js`, 24 keys) and is merged into the settings dictionary.
+- 优化相关文案覆盖八语言（`src/i18n-optimize.js`，24 个键），合并进设置页字典。
+
+### Tests / 测试
+
+- 122 tests (0.7.0 had 75): host RPC branches with a fake LLM, sentinel masking/unmasking, client disable rules and outcome mapping, dictionary key-set merge, and optimize settings persistence.
+- 测试 122 项（0.7.0 为 75）：假 LLM 的宿主 RPC 分支、哨兵遮罩/还原、客户端禁用与结果映射、字典键集合并、优化设置持久化。
+
+## [0.7.1] - 2026-11-01
+
+### Changed / 变更
+
+- README header refresh: the language switch line sits directly under the title, followed by two badge rows — npm version / downloads / CI / tag / stars / license, then node / dsh / tests / languages / platform — in the same style as the project's other DSH plugins.
+- README 头部改版：语言切换行紧贴标题，其下两行徽章（npm 版本/下载量、CI、tag、stars、license；node、dsh、tests、languages、platform），与本项目其他 DSH 插件保持一致。
+- `docs/RELEASE.md` now records the real publish state (0.7.0 released, 0.7.1 prepared).
+- `docs/RELEASE.md` 的发布状态改为记录真实状态（0.7.0 已发布、0.7.1 待发布）。
+
+### Notes / 说明
+
+- Docs-only patch: no runtime, storage or behaviour change.
+- 仅文档改动，不涉及运行时、存储或行为变化。
+
 ## [0.7.0] - 2026-10-29
 
 ### Added / 新增

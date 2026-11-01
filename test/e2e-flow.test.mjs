@@ -173,7 +173,7 @@ test('end to end: a submitted prompt is captured and recalled through the compos
         callback();
       },
       register(spec) {
-        sectionSpec = spec;
+        if (spec?.name === 'settings.section') sectionSpec = spec;
         return () => {};
       },
     },
