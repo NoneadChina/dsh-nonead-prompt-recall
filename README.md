@@ -6,15 +6,25 @@
 
 [![node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org) [![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.1-4B6BFB)](./docs/RELEASE.md) [![tests](https://img.shields.io/badge/tests-122%20passing-brightgreen)](./test) [![languages](https://img.shields.io/badge/languages-8-8A2BE2)](./locale) [![platform](https://img.shields.io/badge/platform-DSH%20web-2F6FEB)](./package.json)
 
-A DeepSeek Harness plugin that gives the composer shell-style **prompt history recall**.
+Two composer features for DeepSeek Harness: shell-style **prompt history recall** and one-click **prompt optimization**.
 
 Current version: **0.8.2**.
+
+**History recall**
 
 - Press **↑** in an empty composer to load the last prompt you sent;
 - press **↑** again to walk further back;
 - press **↓** to walk forward and finally return to the empty draft;
 - history is isolated **per workspace**, persisted on disk, and survives a DSH Desktop restart;
 - once you type or edit, ↑/↓ behave like normal caret movement.
+
+**Prompt optimization**
+
+- A sparkle button in the composer tool row (right of the model selector) rewrites the draft with the session's model;
+- the original stays visible while the request runs, only a successful rewrite replaces it — and only once;
+- the result waits in the composer: the plugin never sends, never clears the draft early, and never writes to your history;
+- `@` references are kept (their content never reaches the model), attachments and images neither block nor take part;
+- the icon turns into an undo arrow after a successful rewrite; one click restores the original draft.
 
 ## Contents
 
@@ -78,14 +88,24 @@ dsh plugin --profile <profile-name> add "file:D:/MyProgram/GitHub/dsh-nonead-pro
 
 Refresh the page (or restart DSH Desktop) afterwards so the browser bundle loads.
 
+> Installing this plugin must never send DSH into recovery mode. If the starter logs `web boot: N entry did not activate`, a client slot was taken over by another plugin — see [Compatibility](#compatibility) for the slot this plugin uses and why.
+
 ## Verify
+
+History:
 
 1. Send a prompt in any workspace (for example `test prompt 1`);
 2. clear the composer and press **↑** — `test prompt 1` should appear;
 3. send another prompt, clear, then press **↑** twice — the recent prompts should appear in order;
 4. press **↓** to walk back to the empty draft;
-5. quit and restart DSH Desktop, then press **↑** again — the history is still there;
-6. open **Settings → 提示词历史** and confirm the history icon in the left navigation, the new header/status layout, and the export / import / clear actions.
+5. quit and restart DSH Desktop, then press **↑** again — the history is still there.
+
+Optimization:
+
+6. Type `帮我把这段代码改成 async`, then click the sparkle button — the icon spins in place, the draft stays visible, and after the rewrite the icon becomes an undo arrow;
+7. click the undo arrow — the original draft is restored; click it, rewrite again, then press Send — the rewritten text is sent and the undo entry disappears;
+8. type a draft containing an `@reference` plus some text and optimize — the reference chip stays in place, only the text is rewritten;
+9. open **Settings → 提示词历史 → 提示词优化** — the card shows the enable switch and a read-only prompt viewer; toggling the switch takes effect immediately (the button disappears/reappears without a page refresh).
 
 The history file can be inspected directly:
 
@@ -100,27 +120,58 @@ Open **Settings → 提示词历史** (the row is localized; an English UI reads
 - **Header** — plugin icon, version badge and a refresh button;
 - **Status** — capture state, entry count, current workspace and storage path;
 - **Capture settings** — enable switch, per-workspace cap (1–5000 entries), retention days (0 = forever), with unit-suffixed inputs and Save / validation feedback;
+- **Prompt optimization** — enable switch for the composer button (saved on click) and a collapsible, read-only viewer for the built-in model prompt: version badge, character count, copy button, no editor and no "restore default";
 - **History** — export / import / clear sit above the recent list, so they stay reachable in a short window; the list shows the five newest prompts for the current workspace.
 
 Export downloads a timestamped JSON file through the browser. Import opens a file picker, parses the JSON in the page (8MB / 20,000-entry limits) and shows the file name, entry count, source workspace and the first five prompts before you confirm the merge.
 
 ## Prompt optimization
 
-Since 0.8.0 a sparkle button sits in the composer tool row, to the right of the model selector.
+Since 0.8.0 a sparkle button sits in the composer tool row, immediately **to the right of the model selector** (DSH renders that slot's outlet there; the button is nudged into place with `order`, so it never competes with DSH's own voice-input control).
 
-- It rewrites the current draft with the session model; **you** review and send it — the plugin never sends, never clears the composer early, and never writes to your prompt history.
-- While the request runs the draft stays visible; only a successful rewrite replaces it, exactly once. Failures, timeouts, cancellation, or a draft you edited in the meantime leave your input untouched.
-- `@` references are preserved: every chip is masked as a `⟦C1⟧` sentinel before the model call and re-inserted at its new position only if the model kept every sentinel in order — reference content never reaches the model.
-- Attachments and images neither block nor take part in the rewrite; the button is disabled only when the text segment is empty or longer than 8000 characters.
-- While the request runs the icon becomes a **spinning arc** that turns in place at the icon centre, so a click always has visible feedback; a failed call shows a toast and leaves the draft untouched.
-- After a successful rewrite the icon becomes an undo arrow; one click restores the original draft (references included). Editing or sending drops that undo.
-- Turns do not collide: optimization is an independent auxiliary call, so it works while an answer is streaming, and cancelling it never stops the answer.
-- Settings → 提示词历史 → **Prompt optimization** hides the button or shows the built-in prompt read-only (version, character count, copy). The switch saves on click — no page-level Save needed.
+**State machine**
+
+| State | Icon | Click does |
+| --- | --- | --- |
+| ready (draft has text) | sparkle | send one auxiliary request and start optimizing |
+| optimizing | spinning arc, turning in place | cancel — the draft is untouched |
+| done (rewrite landed) | undo arrow | restore the original draft (references included) |
+| idle (empty / command draft / over limit) | greyed sparkle | nothing; the tooltip says why |
+
+**What it does with your draft**
+
+- The request carries the draft text only. The transcript, the prompt history and the settings file are never touched, and nothing is sent for you.
+- While the request runs the draft stays visible; the rewrite replaces it only on success, exactly once. A failure, a timeout, a cancellation, or an edit you made meanwhile leaves your input exactly as it was.
+- `@` references are masked as `⟦C1⟧`-style sentinels before the call and re-inserted at their new positions only if the model kept every sentinel in order. Their content never reaches the model, and a damaged response is discarded rather than written.
+- Attachments and images neither block nor take part in the rewrite; the button is disabled only when the text segment is empty or longer than **8,000 characters**.
+- Turns do not collide: optimization is an independent auxiliary call, so it works while an answer is streaming, "Stop generating" does not cancel it, and cancelling it never stops the answer.
+- Limits: a 20-second deadline, an 800-output-token cap on the model call, a prompt rule asking for `max(60, 1.35 × input)` characters (never more than 1,200), and one in-flight request per session.
+
+**Feedback**
+
+| Situation | What you see |
+| --- | --- |
+| Rewrite landed | icon becomes the undo arrow; a polite live region announces it |
+| Model judged the draft already clear | toast "Already clear enough; nothing changed", draft untouched |
+| Model returned nothing | toast "The model returned nothing", draft untouched |
+| You edited the draft meanwhile | toast "Input changed; result discarded", your edit wins |
+| Reference structure changed | toast "Reference structure changed; optimization cancelled" |
+| No model / adapter in this session | toast "No model available in this session" |
+| Failure, timeout, upstream error | toast "Optimization failed; original kept" |
+| You cancelled it | silence — no toast, no write |
+
+**Settings**
+
+**Settings → 提示词历史 → Prompt optimization** turns the button off entirely (hidden, not just disabled) and shows the built-in system prompt read-only: version badge, character count and a copy button. The switch saves on click; no page-level Save is needed, and the composer picks up the change immediately. The prompt itself is maintained by the plugin and ships with the version — there is no editor, by design.
+
+**Privacy**
+
+The draft goes to the session's model and nowhere else. The plugin logs stable error codes only — never your prompt text — and optimization produces no transcript message and no history entry.
 
 ## Commands
 
 `/prompt-recall` manages capture settings and the stored history. Settings persist
-in `settings.json` next to the history files.
+in `settings.json` next to the history files. Prompt optimization is UI-only today: it has no subcommand, and its switch lives in the settings page.
 
 | Subcommand | Effect |
 | --- | --- |
@@ -138,14 +189,26 @@ in `settings.json` next to the history files.
 ```
 <DSH_HOME>/plugin-data/dsh-nonead-prompt-recall/
 ├── history/<workspace-key>.json    # newest-first entries
-├── settings.json                   # capture toggle, caps, retention
+├── settings.json                   # capture toggle, caps, retention, optimization switch
 └── exports/<workspace-key>-<ts>.json
 ```
 
 - `workspace-key` = the first 24 hex characters of the SHA-256 of the normalized workspace path;
 - the file is `{ version, cwd, updatedAt, entries: [{ text, at, sessionId? }] }` with newest entries first;
 - writes use a temporary file + atomic rename; a corrupt file is renamed to `*.corrupt-<timestamp>` and capture restarts from an empty list;
-- `exports/` is only used by the `/prompt-recall export` command — the settings page downloads the payload in memory and never writes it.
+- `exports/` is only used by the `/prompt-recall export` command — the settings page downloads the payload in memory and never writes it;
+- prompt optimization writes **nothing** here: no draft copy, no result, no undo state (the undo snapshot lives in page memory and disappears on reload).
+
+`settings.json` carries the optimization block next to the capture settings:
+
+```json
+{
+  "enabled": true,
+  "maxEntries": 500,
+  "retentionDays": 0,
+  "optimize": { "enabled": true, "maxChars": 8000 }
+}
+```
 
 ## Architecture
 
@@ -155,20 +218,26 @@ session/event (user/message, source.kind=user)
         ▼
 lib/index.js ── HistoryStore ── per-workspace JSON
         │
-        │  connection.rpc.handle('/dsh-nonead-prompt-recall', 'history')
+        │  connection.rpc.handle('/dsh-nonead-prompt-recall')
+        │    ├── history / settings.* / history.*      (history + settings)
+        │    ├── optimize        → lib/optimize-host.js → ctx.llm.stream(...)
+        │    └── optimize.prompt → built-in prompt + version
         ▼
-lib/client.js (browser) ── conversation.input.shell(id).setDraft(text)
+lib/client.js (browser)
+        ├── conversation.input.shell(id).setDraft(draft)   (history recall + undo)
+        └── conversation.input.right slot → src/optimize-button.js → optimize RPC
         ▲
         └─ document keydown (capture) on [data-composer-input]
 ```
 
-- **host half**: listens to `session/event`, persists human prompts per workspace, and exposes `/dsh-nonead-prompt-recall` over Connection RPC (the channel name must be an absolute path). Endpoints: `history`, `ping`, `settings.get`, `settings.set`, `history.clear`, `history.export`, `history.importPayload`; `history.export` returns an in-memory payload and never writes a host file.
-- **client half**: intercepts ↑/↓ on `[data-composer-input]` in the document capture phase and writes the draft through the harness's own composer facade (never by poking the DOM), so draft persistence, the send button and Lexical's undo stack stay consistent.
-- the browser half is bundled as `window.__ModuleLoader__.load({ id, factory })`, the contract of DSH's client module loader.
+- **host half**: listens to `session/event`, persists human prompts per workspace, and exposes `/dsh-nonead-prompt-recall` over Connection RPC (the channel name must be an absolute path). Endpoints: `history`, `ping`, `settings.get`, `settings.set`, `history.clear`, `history.export`, `history.importPayload`, `optimize`, `optimize.prompt`; `history.export` returns an in-memory payload and never writes a host file.
+- **optimization host path** (`lib/optimize-host.js`): validates the payload (setting, text length, `sessionId`, reserved for one in-flight request per session), resolves the route (the pair the browser sends, otherwise the session's latest logged `request/context`), streams one `ctx.llm.stream` call with a 20-second deadline, cleans and classifies the output, and verifies the reference sentinels before returning. Failures map to stable `prompt-recall/optimize-*` codes; the model's error text is never echoed back or logged.
+- **client half**: intercepts ↑/↓ on `[data-composer-input]` in the document capture phase and writes the draft through the harness's own composer facade (never by poking the DOM), so draft persistence, the send button and Lexical's undo stack stay consistent. The optimize button is a separate module (`src/optimize-button.js`) registered into the composer's **list** slot and owning its own state machine and toast.
+- the browser half is bundled as `window.__ModuleLoader__.load({ id, factory })`, the contract of DSH's client module loader; the bundle is a single shared scope, so module-level identifiers are namespaced.
 
 ## Localization
 
-The plugin follows the desktop app's language: whatever language is selected in **Settings → General → Language** (persisted as `locale.preference`) drives the settings page, the `/prompt-recall` command output and the Plugins-page title/description. All eight languages DSH ships are covered:
+The plugin follows the desktop app's language: whatever language is selected in **Settings → General → Language** (persisted as `locale.preference`) drives the settings page, the composer button, the `/prompt-recall` command output and the Plugins-page title/description. All eight languages DSH ships are covered:
 
 | id | language | files |
 | --- | --- | --- |
@@ -181,7 +250,7 @@ The plugin follows the desktop app's language: whatever language is selected in 
 | `ru` | Русский | `locale/ru.json` |
 | `pt` | Português (Brasil) | `locale/pt.json` |
 
-Display metadata on the Plugins page comes from `locale/<id>.json` (lowercase ids, matching DSH's client locales); the settings page registers its dictionaries through `ctx.locale.register(ns, DICTS)` (`src/i18n.js`), and the command surface translates from `lib/i18n.js`. Both require the `zh` and `en` baselines and fall back to `en`, then to the key itself, for a missing translation. `normalizeLocale()` maps host values such as `zh-CN`, `pt-BR` or `en_US` onto the eight ids and returns `en` for anything unknown.
+Display metadata on the Plugins page comes from `locale/<id>.json` (lowercase ids, matching DSH's client locales); the settings page registers its dictionaries through `ctx.locale.register(ns, DICTS)` (`src/i18n.js`), and the command surface translates from `lib/i18n.js`. The 24 optimization strings live in `src/i18n-optimize.js` (keys prefixed `opt*`) and are merged into the same registered dictionary, so the settings card and the composer button always speak the same language. Both halves require the `zh` and `en` baselines and fall back to `en`, then to the key itself, for a missing translation. `normalizeLocale()` maps host values such as `zh-CN`, `pt-BR` or `en_US` onto the eight ids and returns `en` for anything unknown.
 
 Each metadata file uses the `meta` namespace:
 
@@ -200,20 +269,24 @@ npm run check          # build + syntax check + the whole suite
 node scripts/build-client.mjs --check   # fail when lib/client.js is stale
 ```
 
-- `src/core.js` holds the pure navigation decisions (unit-testable); `src/client.js` is the browser integration; `scripts/build-client.mjs` only strips ESM syntax and wraps it for the ModuleLoader (no third-party dependency).
-- `lib/index.js`, `lib/history-store.js` and `lib/message-text.js` are plain Node modules and can be tested with `node --test`.
-- The suite (65 tests) includes a plugin-boundary end-to-end test (host capture → RPC → key handling → `setDraft`) and a settings-nav icon test; the real-window checklist is in [docs/E2E.md](docs/E2E.md).
+- `src/core.js` holds the pure navigation decisions and `src/optimize.js` the pure optimization helpers (empty/limit checks, `⟦Cn⟧` masking and unmasking, draft document assembly) — both unit-testable.
+- `src/client.js` is the browser integration (keyboard bridge, settings page, slot registration); `src/optimize-button.js` is the composer button and its state machine; `scripts/build-client.mjs` only strips ESM syntax and concatenates `protocol → i18n-optimize → i18n → core → optimize → settings → optimize-button → client` for the ModuleLoader (no third-party dependency).
+- `lib/index.js`, `lib/history-store.js`, `lib/message-text.js`, `lib/optimize-host.js` and `lib/optimize-prompt.js` are plain Node modules and can be tested with `node --test`.
+- The suite (122 tests) includes a plugin-boundary end-to-end test (host capture → RPC → key handling → `setDraft`), host-RPC branch tests with a fake `llm`, sentinel masking/unmasking, the client's disable rules and outcome mapping, dictionary key-set checks, settings persistence, and a settings-nav icon test; the real-window checklist is in [docs/E2E.md](docs/E2E.md).
 - CI (`.github/workflows/ci.yml`) runs `npm run check` plus the bundle-sync guard on Node 24.
 - `PLUGIN_VERSION` is read from `package.json`: bump the version there and add a `CHANGELOG.md` entry when releasing.
 
 ## Documentation
 
 - [CHANGELOG.md](CHANGELOG.md) — release history (bilingual);
-- [docs/E2E.md](docs/E2E.md) — manual end-to-end matrix (keyboard, commands, settings, backup);
+- [docs/PROMPT-OPTIMIZE.md](docs/PROMPT-OPTIMIZE.md) — the optimization design: UX spec, RPC contract, error codes, masking rules, model prompt;
+- [docs/E2E.md](docs/E2E.md) — manual end-to-end matrix (keyboard, commands, settings, backup, and the prompt-optimization pass);
 - [docs/RELEASE.md](docs/RELEASE.md) — pre-release checklist, packaging and publish/rollback steps;
 - repository: <https://github.com/NoneadChina/dsh-nonead-prompt-recall> · issues: <https://github.com/NoneadChina/dsh-nonead-prompt-recall/issues>.
 
 ## Compatibility
 
 - Host: DSH 0.2.1-rc.3 (Nonead DSH Desktop 2.1.11), verified;
-- Host contracts relied upon: `[data-composer-input]`, `conversation.input.shell(id).setDraft()`, the `cwd` / `retainedBy.mainView` fields of the `sessions.list` snapshot, and `session/event`'s `user/message`. If a future host changes them, adapt `lib/client.js` and `src/client.js` (the changes are concentrated there).
+- Host contracts relied upon: `[data-composer-input]`, `conversation.input.shell(id).setDraft()`, the `cwd` / `retainedBy.mainView` fields of the `sessions.list` snapshot, `session/event`'s `user/message`, the `conversation.input.right` **list** slot (registered through `ctx.slots.inject` + `ctx.slots.register`), `ctx.get('llm').stream(...)` with its terminal `finish` chunk, `Session.requestContext()` for the last logged route, and `settings.get` / `settings.set` over the plugin's RPC channel.
+- `conversation.input.activity` is deliberately **not** used: DSH declares it as a single-occupant slot and already mounts its voice-input button there. Registering a second occupant evicts it and the whole starter fails with `web boot: 1 entry did not activate`, which drops DSH into recovery mode. Keep new controls in list slots such as `conversation.input.right`.
+- If a future host changes these contracts, adapt `lib/index.js`, `lib/optimize-host.js`, `src/client.js` and `src/optimize-button.js` (the changes are concentrated there).

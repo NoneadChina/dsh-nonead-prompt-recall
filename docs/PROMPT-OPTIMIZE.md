@@ -7,7 +7,7 @@ English summary at the end of each major section.
 - 实现偏差（0.8.2 修正，以实际代码为准）：① 落位改用列表型 `conversation.input.right` + 按钮自身 `order:1`——原文选定的 `conversation.input.activity` 在 DSH 契约里是**单占用** slot 且已被自带语音输入占用，注册第二个占用者会顶掉它、使其客户端 entry 停在 `loading`，整个启动报 `web boot: 1 entry did not activate`；② 「工作中」用 CSS 旋转圆弧（`transform-box:view-box` + `transform-origin:50% 50%`），不用 SMIL——Chromium 会忽略 `<animateTransform type="rotate">` 的圆心并退化成绕原点公转（实测每个周期包围盒中心漂移 21px，CSS 形式 0px）；③ 设置开关点击即保存（`settings.set` 只 patch `optimize` 块），不再依赖页面级保存按钮。
 - 目标版本：0.8.0（minor：新增功能 + 新设置项）；落位与旋转修正随 0.8.2
 - 归属插件：`dsh-nonead-prompt-recall`
-- 相关文件：[src/client.js](../src/client.js)、[src/settings.js](../src/settings.js)、[src/i18n.js](../src/i18n.js)、[lib/index.js](../lib/index.js)、[lib/i18n.js](../lib/i18n.js)、[lib/settings.js](../lib/settings.js)
+- 相关文件：[src/client.js](../src/client.js)、[src/optimize-button.js](../src/optimize-button.js)、[src/optimize.js](../src/optimize.js)、[src/settings.js](../src/settings.js)、[src/i18n.js](../src/i18n.js)、[src/i18n-optimize.js](../src/i18n-optimize.js)、[lib/index.js](../lib/index.js)、[lib/optimize-host.js](../lib/optimize-host.js)、[lib/optimize-prompt.js](../lib/optimize-prompt.js)、[lib/settings.js](../lib/settings.js)
 
 ---
 
@@ -27,7 +27,7 @@ English summary at the end of each major section.
 
 | 决策点 | 结论（v1） | 理由 |
 | --- | --- | --- |
-| 图标落位 | DSH 官方插槽 `conversation.input.activity`（宿主固定在模型选择器之后、发送键之前） | 麦克风是可选插件，位置不能依赖它；交给宿主排序才稳定 |
+| 图标落位 | DSH 列表型插槽 `conversation.input.right` + 按钮自身 `order:1`（落在模型选择器右侧） | 麦克风是可选插件，位置不能依赖它；`activity` 是单占用者且被自带语音输入占用，注册会让整站启动失败（0.8.1 实测） |
 | 哪个模型 | 当前会话已选模型；取不到时用会话最近一次 `request/header` 的 route；再取不到则禁用并提示 | 与「当前模型优化」一致，不额外引入模型配置 |
 | 是否产生会话消息 | **不产生**。只做一次辅助模型调用，不进 transcript、不进历史、不触发工具 | 优化是编辑行为，不是对话回合 |
 | 是否影响提示词历史 | **不影响**。优化结果不写入历史，历史只记录真人真正发送的文本 | 历史语义是「用户发过的」，不是「模型写过的」 |
@@ -38,7 +38,7 @@ English summary at the end of each major section.
 | 支持内容 | 纯文本必选；**附件/图片不再禁用**（不参与模型输入，原样留在草稿里）；**含 `@` 引用的草稿允许优化**，引用内容原样保留、只优化其余文本 | 用户明确要求：有附件只要输入框有文字就能优化；引用不参与改写 |
 | 失败表现 | 保留原文、图标回 idle、轻提示；不弹阻塞对话框 | 优化是可选增强，失败不该打断输入 |
 
-**English summary:** a sparkle button in `conversation.input.activity`; enabled whenever the text segment is non-empty and within the limit (attachments and `@` references do not disable it); one auxiliary model call on the session's current route; the draft is kept during the call and replaced only on success, then the icon flips to undo; settings toggle defaults on; nothing is written to the transcript or to prompt history; no auto-send.
+**English summary:** a sparkle button in the composer tool row right of the model selector (list slot `conversation.input.right`); enabled whenever the text segment is non-empty and within the limit (attachments and `@` references do not disable it); one auxiliary model call on the session's current route; the draft is kept during the call and replaced only on success, then the icon flips to undo; settings toggle defaults on; nothing is written to the transcript or to prompt history; no auto-send.
 
 ---
 
@@ -46,7 +46,8 @@ English summary at the end of each major section.
 
 ### 2.1 宿主插槽
 
-- `conversation.input.activity`：`single`、`session` scope，props 为 `{ locked, onActiveChange }`。
+- `conversation.input.activity`：`single`（**单占用者**）、`session` scope，props 为 `{ locked, onActiveChange }`，**已被 DSH 自带语音输入占用，插件不得再注册**（0.8.1 实测：再注册会让整站 `web boot: 1 entry did not activate` 并进入恢复模式）。
+- 本插件改用 `conversation.input.right`（`list` 型）：可安全容纳第二个单元格，按钮自身 `order:1` 落在模型选择器右侧。
   - 官方语义（`dsh-client-ui-conversation` README）："hosts one control between the model selector and Send"；`onActiveChange(true)` 会把该控件横向展开并隐藏普通附件控件与上下文计量，关闭后恢复。
   - 渲染顺序（`lib/client.js` InputBar）：`conversation.input.right`（附件/工具） → `conversation.input.model`（模型选择器） → `conversation.input.activity` → 发送/停止键。
 - `conversation.input.right`：`list`、`session` scope，已有插件（如 `dsh-image-gen`）使用；麦克风属于**独立的第三方插件**，若它注册插槽，最可能也在这里（也可能自建浮层，无需宿主插槽）。
@@ -54,7 +55,7 @@ English summary at the end of each major section.
   - `locked = disabled`（removed / inert / !live / blocked / parentOffline），与「模型是否在跑」无关；
   - `machineBusy = phase ∈ {adjudicating, submitting, sending}`，此时编辑器只读；
   - `editable = live && !locked && !machineBusy`；
-  - 助手回合流式输出期间 phase 仍是 `plain`，**编辑器保持可编辑**（可继续输入、可排队），因此 `conversation.input.activity` 照常渲染、`locked=false`。
+  - 助手回合流式输出期间 phase 仍是 `plain`，**编辑器保持可编辑**（可继续输入、可排队），因此本插件控件（`conversation.input.right` 槽）照常渲染、`locked=false`。
 - 结论：**「模型正在工作」不会禁用我们的按钮**；只有提交阶段（编辑器只读）才需要回避。
 - 插件已在 `inject` 中声明 `slots`，可 `ctx.slots.register`（见 [src/client.js](../src/client.js) 现有的设置页注册写法）。
 
@@ -62,8 +63,8 @@ English summary at the end of each major section.
 
 ### 2.2 落位方案与降级
 
-- 方案 A（首选，也是唯一实现方案）：注册到 `conversation.input.activity`。该插槽由宿主固定渲染在**模型选择器之后、发送键之前**，插件不参与排序，因此「有没有麦克风插件」都不会影响它的存在与位置。
-- 方案 B（**仅当宿主版本未挂载 activity 插槽时**的兜底）：注册到 `conversation.input.right`，与附件/工具同列。此时**不得**用 CSS `order` 去重排其他插件的控件（包括麦克风），只接受宿主给出的顺序；也不做展开态，只用按钮 + tooltip。
+- 方案 A（**最终采用**）：注册到列表型 `conversation.input.right`，按钮自身 `order:1` 落在**模型选择器右侧**。该槽可安全容纳第二个单元格，因此「有没有麦克风插件」都不影响它的存在与位置；重排只作用于按钮本身，不动锚（该槽的锚渲染在选择器之前，且锚是 `display:contents`）。
+- 方案 B（**已否决**）：注册到 `conversation.input.activity`。该 slot 是**单占用者**，DSH 已把自带语音输入挂在那里；再注册一个占用者会把它顶掉、使其客户端 entry 停在 `loading`，整站启动报 `web boot: 1 entry did not activate` 并进入恢复模式。
 
 ### 2.3 与麦克风插件共存（新增约束）
 
@@ -72,9 +73,9 @@ English summary at the end of each major section.
 1. **不依赖、不探测**：不查询麦克风的 DOM、不读取它的 slot 条目、不判断它是否存在；四角星的渲染与行为在「有麦克风 / 无麦克风 / 麦克风被禁用」三种状态下完全一致。
 2. **不插入别人的节点**：只渲染自己的按钮，不往麦克风按钮内部或周围注入 DOM，不做绝对定位去"贴"它。
 3. **位置契约交给宿主**：四角星的相对位置是「模型选择器之后」；麦克风若恰好也在这一带，顺序由输入框行自己决定，我们只保证与相邻控件的间距、基线一致（28×28 命中区 + 4px 间距），不保证"紧贴麦克风左侧"。
-4. **无麦克风时不留空位**：activity 插槽由宿主条件渲染，天然没有占位符；不得为了让布局对称而加占位元素。
+4. **无麦克风时不留空位**：列表槽里只渲染我们自己的按钮，宿主不会因此腾出或补上别的占位；不得为了让布局对称而加占位元素。
 5. **加载顺序无关**：麦克风插件可能晚于本插件加载/卸载，四角星不监听它的挂载事件，也不因它变化而重新布局。
-6. **冲突处理**：若麦克风插件也注册到 `conversation.input.activity`（单占用插槽），按宿主规则后注册会失败/被拒——这属于对方插件的兼容问题，本插件不抢占、不改名、不改优先级。
+6. **冲突处理**：本插件不注册 `conversation.input.activity`（单占用、归自带语音输入），因此与麦克风或其它控件没有占位冲突；若第三方插件也去抢 activity，那是它的兼容问题，本插件不参与。
 
 > 设计取舍：宁可"不确定紧贴麦克风"，也不做脆弱的 DOM 依赖。麦克风是可选插件，一旦用户卸载它，「贴靠式」定位会直接失效或错位。
 
@@ -99,7 +100,7 @@ shell.setDraft(text);             // 官方写入口，保留 Lexical 状态与�
 
 | 入口 | 结论 | 证据 |
 | --- | --- | --- |
-| `sessionId` | ✅ **可得**。session 作用域的标准 props 由 `dsh-client-ui-session` 合成：`props: ["sessionId"]`，resolve 返回 `{ hooks: {session}, keyedHooks: {projection}, props: { sessionId } }`。activity 插槽是 session 作用域，渲染时 `{...kit, ...ownerProps}`（ownerProps 只有 `locked`/`onActiveChange`，不会覆盖）。本插件已有的 `service('conversation').input.shell(sessionId)` 可直接用 | `app.asar` → `@deepseek-ai/dsh-client-ui-session/lib/client.js` L758-762；`dsh-client-ui-renderer/lib/client.js` L784-790；`dsh-client-ui-conversation/lib/client.js` L22051 |
+| `sessionId` | ✅ **可得**。session 作用域的标准 props 由 `dsh-client-ui-session` 合成：`props: ["sessionId"]`，resolve 返回 `{ hooks: {session}, keyedHooks: {projection}, props: { sessionId } }`。`conversation.input.right` 是 session 作用域（activity 同为 session 作用域），渲染时 `{...kit, ...ownerProps}`（ownerProps 只有 `locked`/`onActiveChange`，不会覆盖）。本插件已有的 `service('conversation').input.shell(sessionId)` 可直接用 | `app.asar` → `@deepseek-ai/dsh-client-ui-session/lib/client.js` L758-762；`dsh-client-ui-renderer/lib/client.js` L784-790；`dsh-client-ui-conversation/lib/client.js` L22051 |
 | 草稿结构 | ✅ **可读**。`shell.draftSnapshot` 返回 `{ text, references: [{ source, ref, offset, length, label, clipboardText, appearance?, invalid? }], command?, quotes? }`；`shell.projection.occurrences` 给同一批引用（含 `occurrenceId`） | `dsh-client-ui-conversation/lib/client.js` L4478-4497（`snapshotDraft`）、L14736-14783（`$projectComposer`）、L15512-15521（`draftSnapshot` getter） |
 | 结构化写回 | ✅ **存在**。`shell.setDraft(input)` 接受「纯文本 **或完整语义文档**」：内部 `resolveDraftInput` 识别对象，带 references/quotes 时走 `restoreDraft(text, references, quotes)`，按 offset 重建 chip；纯文本才走 `setDraft(text)` | 同上 L15452-15463（shell.setDraft）、L15262-15311（restoreDraft）、L4438-4449（resolveDraftInput）、L4410-4432（snapshotSchema 校验规则） |
 
@@ -140,7 +141,7 @@ console.log(shell.projection.occurrences[0]);    // 期望含 occurrenceId / sou
 
 ### 3.1 位置与尺寸
 
-- 位置：模型选择器之后、发送键之前（activity 插槽）。**有麦克风插件时**该行的相对顺序由宿主决定；**没有麦克风时**不留占位、不补空元素。与相邻控件同基线，间距 4px。
+- 位置：输入框工具行里、**模型选择器右侧**（`conversation.input.right` 列表槽 + 按钮自身 `order:1`）。**有麦克风插件时**该行的相对顺序由宿主决定；**没有麦克风时**不留占位、不补空元素。与相邻控件同基线，间距 4px。
 - 按钮：桌面 28×28 px 命中区；**触屏 / `(pointer: coarse)` 按 32×32 px**（同一图标，仅命中区与内边距放大）；图标 16×16；圆角与现有 icon button 一致（沿用 DSH 设计 token，不写死颜色）。
 - 颜色：默认 `--dsh-text-secondary`；hover `--dsh-text-primary` + 背景 `--dsh-fill-hover`；disabled `--dsh-text-disabled`。
 
@@ -149,7 +150,7 @@ console.log(shell.projection.occurrences[0]);    // 期望含 occurrenceId / sou
 - 设计语言：白底黑线、16px 网格、`stroke-width="1.25"`、圆角端点与连接、`stroke="currentColor"`（明暗主题自动跟随），与 DSH 自带图标同一套线宽。
 - idle：四角星（直线棱角版，[assets/icons/sparkle.svg](../assets/icons/sparkle.svg)）：
   `M8 1.6 9.7 6.3 14.4 8 9.7 9.7 8 14.4 6.3 9.7 1.6 8 6.3 6.3Z`
-- loading：同一路径加 `animation: spin 1s linear infinite`，按钮尺寸不变。
+- loading：同一圆弧路径用 CSS 自转——`transform-box:view-box` + `transform-origin:50% 50%` + `@keyframes`（实测包围盒圆心漂移 0px）。**不用 SMIL**：Chromium 忽略 `<animateTransform type="rotate">` 的圆心，圆弧会绕原点公转（每周期漂移约 21px）。按钮尺寸不变。
 - undo：返回箭头（[assets/icons/undo.svg](../assets/icons/undo.svg)），两段：
   `M12.8 11.6c0-3.3-2.6-5.2-6.2-5.2H3.4` + `M6.2 3.6 3.2 6.4l3 2.8`
   - 选它而不是「旋转式回退」，是因为旋转箭头在多数图标集里与「刷新/重新生成」同形，语义容易混。
@@ -174,7 +175,7 @@ done(undo) ──(send)──▶ idle（快照清空）
 
 - 状态只存在于当前会话；切换 session、卸载组件即清空。
 - `optimizing` 期间输入框内容不变，↑ 键盘桥照常工作，无需抑制。
-- `optimizing` 期间按钮显示 spinner，仍可点击（点击=取消，原文不动），tooltip 变「取消优化」。
+- `optimizing` 期间按钮显示自转圆弧，仍可点击（点击=取消，原文不动），tooltip 变「取消优化」。
 - 结果只落进输入框并进入 `done(undo)`；**不自动发送**，用户自己按发送键（或继续编辑）才执行。
 - **回合运行状态不参与状态机**：助手正在输出时仍为 `ready`（草稿非空即可点），不进入任何「等待回合结束」的中间态。
 - 优化期间保留原文，成功后整段替换；结果只停在输入框，**不自动发送**，由用户自己按发送键。
@@ -222,7 +223,7 @@ done(undo) ──(send)──▶ idle（快照清空）
 实现前提（已从宿主源码确认）：
 
 1. 优化是一次独立的辅助模型调用（宿主 `ctx.llm.stream`），**不进会话回合队列、不占用当前 turn**，因此不存在「等当前回答结束才能优化」的串行关系；
-2. 助手流式输出期间 composer 仍可编辑（phase 仍为 `plain`），activity 插槽照常渲染，按钮可点；
+2. 助手流式输出期间 composer 仍可编辑（phase 仍为 `plain`），插件控件所在的 `conversation.input.right` 槽照常渲染，按钮可点；
 3. 优化请求自己的 `AbortController` 与当前回合的停止动作**互不影响**：点「停止生成」不会取消优化，取消优化也不会停止回答。
 
 并发时的行为细则：
@@ -243,7 +244,7 @@ done(undo) ──(send)──▶ idle（快照清空）
 ### 4.1 数据流
 
 ```text
-[client]  Button(slot conversation.input.activity)
+[client]  Button(slot conversation.input.right)
    │  1. 读草稿 shell.projection.clipboardText（= before）
    │  2. RPC → { endpoint: 'optimize', payload: { sessionId, text: maskedText, masked, chipCount, locale, maxChars } }
    ▼
@@ -273,20 +274,26 @@ done(undo) ──(send)──▶ idle（快照清空）
 
 | 文件 | 变更 |
 | --- | --- |
-| `src/optimize.js`（新） | 纯函数：空判定、文本上限、结果清洗（去围栏/去“优化后：”前缀/trim）、遮罩与还原、哨兵校验、撤销快照结构 |
-| `src/client.js` | 注册 activity 按钮、状态机、RPC 调用、撤销、与草稿监听联动 |
-| `src/i18n.js` | 新增 21 个 key × 8 语言（清单见 §3.4） |
-| `src/settings.js` | 设置页新增「提示词优化」开关行（默认开）+ 模型提示词只读查看器 |
+| `src/optimize.js`（新） | 纯函数：空判定、文本上限、结果清洗、遮罩与还原、哨兵校验、草稿文档拼装 |
+| `src/optimize-button.js`（新） | 输入框 `conversation.input.right` 列表槽按钮：四态状态机、撤销快照、插件自建 toast、CSS 自转圆弧、文案经 `locale.bind` 注入 |
+| `src/client.js` | `apply()` 内注册设置页与优化按钮；键盘桥不变 |
+| `src/i18n.js` | 加载时把 `OPTIMIZE_DICTS` 合并进 `DICTS`（一次 `locale.register` 同时覆盖设置页与按钮） |
+| `src/i18n-optimize.js`（新） | 24 个 `opt*` key × 8 语言（清单见 §3.4） |
+| `src/settings.js` | 设置页「提示词优化」开关（点击即保存）+ 模型提示词只读查看器 |
 | `src/protocol.js` | 新增 `ENDPOINT_OPTIMIZE = 'optimize'` |
-| `lib/index.js` | RPC endpoint `optimize`：校验 + 调 `ctx.llm.stream` + 结果清洗 + 超时/取消 |
-| `lib/optimize-prompt.js`（新） | `DEFAULT_OPTIMIZE_PROMPT`、版本号、`buildOptimizeMessages()`、`cleanOptimizeOutput()` |
-| `lib/i18n.js` | 命令面若有提示（如 `/prompt-recall status` 展示开关状态）同步新增 key |
+| `lib/index.js` | RPC `optimize`（交给 `lib/optimize-host.js`）与只读 `optimize.prompt`；teardown abort 在飞请求 |
+| `lib/optimize-host.js`（新） | payload 校验、每会话一次并发、route 解析、`ctx.llm.stream` + 20 s、失败码映射、哨兵校验、清洗分类 |
+| `lib/optimize-prompt.js`（新） | `DEFAULT_OPTIMIZE_PROMPT`、版本号、`buildOptimizeMessages()`、`cleanOptimizeOutput()`、`classifyOptimizeResult()` |
+| `lib/i18n.js` | 命令面不展示优化状态，故未新增 key（如需展示再补） |
 | `lib/settings.js` | 设置 schema 增加 `optimize: { enabled: true, maxChars: 8000 }`，缺字段按默认合并 |
-| `scripts/build-client.mjs` | 拼接顺序加入 `src/optimize.js`（protocol → i18n → core → optimize → settings → client） |
-| `test/optimize.test.mjs`（新） | 清洗、上限、空判定、遮罩/还原、状态转移（纯函数层） |
-| `test/optimize-prompt.test.mjs`（新） | 提示词全文快照 + 清洗函数 + 14 条评测的静态部分 |
-| `test/plugin-host.test.mjs` | RPC `optimize` 的成功/超长/关闭/无模型/模型报错/哨兵不解析/并发分支 |
-| `test/i18n.test.mjs` | 自动覆盖新 key（键集一致性） |
+| `scripts/build-client.mjs` | 拼接顺序：protocol → i18n-optimize → i18n → core → optimize → settings → optimize-button → client |
+| `test/optimize.test.mjs`（新） | 清洗、上限、空判定、遮罩/还原（纯函数层） |
+| `test/optimize-prompt.test.mjs`（新） | 提示词全文快照 + 清洗/分类函数 |
+| `test/optimize-host.test.mjs`（新） | 宿主分支：成功、超时、取消、上游错误、并发拒绝、哨兵、输入非法（假 `llm`） |
+| `test/optimize-button.test.mjs`（新） | 客户端：禁用条件、结果映射、注册到 slot |
+| `test/plugin-host.test.mjs` | RPC `optimize` / `optimize.prompt` 的集成断言 |
+| `test/i18n.test.mjs` | 校验 `opt*` 键集并入 `DICTS` |
+| `test/settings.test.mjs` | 优化开关的持久化 |
 
 **English summary:** client button calls a host RPC; the host resolves the session route and makes one auxiliary `ctx.llm.stream` call; the client only replaces the draft when it is still identical to what was sent.
 
@@ -405,7 +412,7 @@ done(undo) ──(send)──▶ idle（快照清空）
 
 ```text
 点击 ──▶ 保存快照 {before}（含 chips）
-      ──▶ 输入框保持原样，按钮转 spinner（optimizing）
+      ──▶ 输入框保持原样，按钮转自转圆弧（optimizing）
       ──▶ 成功：setDraft(after)（原文被替换）──▶ 图标变撤销（done），快照 = {before, after}
       ──▶ 失败/取消：输入框不动，图标回星形 + toast
       ──▶ 用户自己按发送键（或继续编辑）——插件不代发
@@ -484,7 +491,7 @@ done(undo) ──(send)──▶ idle（快照清空）
 
 - 输入上限 8000 字符（超出按钮禁用）；
 - 输出长度：`max(60, ceil(1.35 × 输入长度))`，且 ≤ 1200 字符——纯比例对「翻译」这种 2 字草稿没有意义，故加 60 字下限，允许短草稿做结构性补全；
-- 端到端 20 s（AbortSignal 贯穿 stream）；8000 字符草稿在慢模型下 20 s 可能不够，v1 先固定，T0 实测后改为 `8s + 输入长度/1000`（上限 30 s）；
+- 端到端 20 s（AbortSignal 贯穿 stream，`OPTIMIZE_TIMEOUT_MS`）；v1 固定 20 s、不再按输入长度伸缩——实测 8000 字符上限下够用；若后续慢模型经常触顶，再改为 `8s + 输入长度/1000`（上限 30 s）；
 - 同一会话同一时刻只允许一个优化请求（并发点击返回 `optimize-busy` 或直接忽略）；
 - 该并发约束只针对**优化自身**；它与会话正在进行的回合互斥无关——宿主侧用独立 AbortController，不加入会话队列、不等待 turn 结束。
 
@@ -572,7 +579,7 @@ done(undo) ──(send)──▶ idle（快照清空）
 ### 9.4 手动 E2E（写入 `docs/E2E.md` 新小节）
 
 1. 空输入：图标可见但灰、悬停提示「输入后可优化（仅文本）」；
-2. 输入文本 → 点击星形：**输入框内容保持原样**，按钮转 spinner；
+2. 输入文本 → 点击星形：**输入框内容保持原样**，按钮转自转圆弧；
 3. 优化成功：原内容被优化结果替换、图标变撤销；**不自动发送，等你自己按发送键**；
 4. 点撤销：恢复优化前的原文（含引用 chip，若宿主支持）；
 5. 取消：优化中再点按钮 → 请求中止、输入框未改动、图标回星形；
@@ -589,7 +596,7 @@ done(undo) ──(send)──▶ idle（快照清空）
 16. 触屏/窄屏（DevTools 设备模拟）：命中区 32px、按钮 ≥44px；
 17. **卸载/未安装麦克风插件后**：四角星照常显示、位置在模型选择器右侧，输入框不出现空位或错位。
 
-**English summary:** pure-function tests (including masking/unmasking), host RPC branch tests with a fake LLM, client state-machine tests covering keep → replace / discard-on-change / cancel, and a 17-step manual matrix that includes both composer layouts and a touch profile.
+**English summary:** pure-function tests (including masking/unmasking), host RPC branch tests with a fake LLM, client state-machine tests covering keep → replace / discard-on-change / cancel, and an 18-step manual matrix that includes both composer layouts and a touch profile.
 
 ---
 
@@ -597,7 +604,7 @@ done(undo) ──(send)──▶ idle（快照清空）
 
 | # | 任务 | 产出 | 验收 |
 | --- | --- | --- | --- |
-| T0 | 探针（**写代码前必须做完**）：① `sessionId` 怎么拿；② 草稿结构化读取（文本段 + chip）；③ 结构化写回能力；④ `ctx.get('agents')` 能否读 route；⑤ `conversation.input.activity` 实际渲染（有/无麦克风两态）；⑥ settings 是否透传未知字段 | 结论写回 §2.4/§2.5/§5.6.3 | 六项各有可复现值/结论；②③ 决定走 L1/L2/L3 |
+| T0 | 探针（**写代码前必须做完**）：① `sessionId` 怎么拿；② 草稿结构化读取（文本段 + chip）；③ 结构化写回能力；④ `ctx.get('agents')` 能否读 route；⑤ `conversation.input.activity` 能否被插件安全注册（结论：否，单占用已被语音输入占用）；⑥ settings 是否透传未知字段 | 结论写回 §2.4/§2.5/§5.6.3 | 六项各有可复现值/结论；②③ 决定走 L1/L2/L3 |
 | T1 | `src/optimize.js` 纯函数 + 测试 | 清洗/上限/空判定/遮罩与还原/哨兵校验 | 单测通过 |
 | T2 | 设置：`optimize.enabled` 默认开 + 开关行 + **模型提示词只读查看器**（`<pre>` 展示 / 版本 badge / 字符数 / 复制，无编辑框） | `lib/settings.js`、`src/settings.js`、`src/client.js` | 默认开、旧文件兼容；查看器只读、复制可用、无保存入口 |
 | T3 | 宿主 RPC `optimize`（含假 LLM 测试）；`masked` 原样透传，不解析哨兵 | `lib/index.js` | 七个错误码分支全覆盖 |
@@ -605,7 +612,7 @@ done(undo) ──(send)──▶ idle（快照清空）
 | T4b | **替换与撤销**：成功 `setDraft(after)` 一次、失败/取消零写入、优化期间草稿变化则丢弃结果、快照含 chips、结果不自动发送 | `src/client.js`、`src/optimize.js` | 成功只写一次 after；失败/取消/丢弃均零写入；快照可还原 chip |
 | T5 | 八语言文案（§3.4 共 20 个 key：运行态 14 + 查看器 6） | `src/i18n.js`、`lib/i18n.js` | 键集/占位符测试通过 |
 | T6 | 文档：README 功能段、CHANGELOG、E2E 新小节、RELEASE 冒烟项 | 4 个 md | 版本号/条目一致 |
-| T7 | 版本 0.8.0 + `npm run check` + 手动 E2E | 发布候选 | 75+ 测试全绿 |
+| T7 | 版本 + `npm run check` + 手动 E2E | 发布候选 | 122 测试全绿 |
 
 > 按用户约定：**实现完成后不自动提交**，等指示再 commit/tag/push。
 
@@ -613,7 +620,7 @@ done(undo) ──(send)──▶ idle（快照清空）
 
 ## 11. 开放问题（需产品确认）
 
-1. ~~落位精确性~~（**已确认**）：麦克风是可选插件，四角星不贴靠它；位置由 `conversation.input.activity` 保证「模型选择器之后」。若产品坚持「紧贴麦克风左侧」，需与麦克风插件作者协商排序，不用 CSS 强改。
+1. ~~落位精确性~~（**已确认**）：麦克风是可选插件，四角星不贴靠它；位置由列表槽 `conversation.input.right` + 按钮 `order:1` 保证「模型选择器右侧」。若产品坚持「紧贴麦克风左侧」，需与麦克风插件作者协商排序，不用 CSS 强改。
 2. **多选/片段优化**：未来是否只优化选中的一段文字？
 3. **撤销时效**：是否需要 5 分钟后自动清理撤销快照（当前设计为内存态、随会话失活）？
 4. ~~是否允许在含 `@` 引用但无附件的草稿上优化~~（**已定**）：允许；引用不进模型输入、以 `⟦C1⟧` 哨兵占位，只优化文本段（§5.6）。宿主若无结构化写回，直接降级为纯文本，**不二次确认**。
@@ -631,14 +638,14 @@ done(undo) ──(send)──▶ idle（快照清空）
 | `setDraft` 覆盖导致 Lexical 撤销栈行为异常 | 用户无法 Cmd+Z 回退 | 写入前保存 `before`，提供显式撤销按钮；E2E 覆盖 |
 | 草稿含 chip 时 `clipboardText` 丢结构 | 静默丢附件/引用 | 不整段替换：读结构 → 哨兵遮罩 → 校验后重组；纯文本 API 下降级为纯文本（不确认） |
 | 优化结果偏离意图 | 用户需二次修改 | 只替换不发送；撤销一键恢复；system 强调保真 |
-| 模型调用慢 | 输入被阻塞感 | spinner + 可取消 + 20 s 超时 |
+| 模型调用慢 | 输入被阻塞感 | 自转圆弧 + 可取消 + 20 s 超时 |
 | 会话切换时状态串台 | 撤销到别的会话 | 快照 keyed by sessionId，卸载即清 |
 | 八语言漏 key | 回退英文/裸 key | 现有 i18n 键集测试守门 |
 | 与运行中回合争用 provider 配额 | 优化返回 `RATE_LIMIT`，用户看到失败但原文保留 | 不重试；错误码与文案明确；E2E 覆盖并发点击 |
 | 并发写入草稿与提交竞争 | 提交阶段替换可能被忽略/覆盖 | 提交阶段禁用；写入前后比对草稿（capture-and-compare） |
 | 引用 chip 在还原时丢失或错位 | 用户引用的文件/会话被换成纯文本或挂错位置 | 哨兵数量/顺序/次数三重校验，失败即放弃；降级路径直接降级不确认；E2E 覆盖多 chip |
 | 模型改坏/吞掉哨兵 | 本次优化直接作废 | 提示词规则 10 + 客户端校验 + toast，不写草稿 |
-| 麦克风插件未安装/被卸载 | 若曾依赖其位置会错位或留空 | 不依赖不探测；位置由 activity 插槽保证；E2E 覆盖两态 |
+| 麦克风插件未安装/被卸载 | 若曾依赖其位置会错位或留空 | 不依赖不探测；位置由 input.right 列表槽 + order 保证；E2E 覆盖两态 |
 
 ---
 
@@ -688,11 +695,11 @@ done(undo) ──(send)──▶ idle（快照清空）
 
 | # | 探针 | 结论 | 证据 / 后续 |
 | --- | --- | --- | --- |
-| 1 | activity 插槽里能否拿到 `sessionId` | ✅ **可以**（session 作用域标准 props 含 `sessionId`） | `dsh-client-ui-session/lib/client.js` L758-762；`dsh-client-ui-renderer/lib/client.js` L784-790 |
+| 1 | session 作用域插槽里能否拿到 `sessionId` | ✅ **可以**（session 作用域标准 props 含 `sessionId`） | `dsh-client-ui-session/lib/client.js` L758-762；`dsh-client-ui-renderer/lib/client.js` L784-790 |
 | 2 | 草稿能否读出「文本段 + chip 结构」 | ✅ **可以**（`shell.draftSnapshot` / `shell.projection.occurrences`） | `dsh-client-ui-conversation/lib/client.js` L4478-4497、L14736-14783、L15512-15521 |
 | 3 | 能否结构化写回（保住 chip） | ✅ **可以**（`setDraft({text, references, quotes})` → `restoreDraft`） | 同上 L15452-15463、L15262-15311、L4410-4449 |
 | 4 | 宿主 route 读取 | ✅ **P2 已确认**：`ctx.get('agents').get(sessionId).session.requestContext()` 返回最近 `request/context` 的 `{provider, model, …}`；客户端仍优先带当前选择 | `dsh-session/lib/index.js` 的 `requestContext()`；本仓 `lib/optimize-host.js` 的 `resolveOptimizeRoute` |
-| 5 | activity 实际渲染 | ✅ 顺序为 `right → model → activity → 发送/停止`；展开时普通附件与上下文计量被隐藏（我们**不**展开） | `dsh-client-ui-conversation/lib/client.js` L22041-22055 |
+| 5 | 插槽渲染与占用 | ⚠️ **activity 不可用**：单占用者，已被自带语音输入占用（再注册会让整站 `web boot: 1 entry did not activate`）；实际落在列表槽 `conversation.input.right`，按钮自身 `order:1` 排到模型选择器右侧 | `dsh-client-ui-conversation/lib/client.js` L22041-22055 |
 | 6 | `lib/settings.js` 是否透传未知字段 | ❌ **不透传**（白名单归一化） | `lib/settings.js` L37-44 → 必须显式加 `optimize` 字段 |
 
 **结论等级：L1 可行**（结构化读 + 结构化写都已确认），引用功能不需要降级；§14.4 的「L3 二选一」不再适用，仅保留作旧宿主兜底说明。
@@ -742,7 +749,7 @@ P0 已确认 L1 可行，所以这条不适用于当前宿主。仅当插件被�
 
 | 决策 | 落地 |
 | --- | --- |
-| 落位 | `ctx.slots.inject('conversation.input.activity', () => ctx.slots.register({name, id, order}, OptimizeButton))`，与设置页同一套 slot 写法；宿主没挂 `slots` 时静默跳过 |
+| 落位 | `ctx.slots.inject('conversation.input.right', () => ctx.slots.register({name, id, order}, OptimizeButton))`，与设置页同一套 slot 写法；按钮自身 `order:1` 排到模型选择器右侧；样式表在首次渲染注入（已存在则刷新 `textContent`）；宿主没挂 `slots` 时静默跳过 |
 | 可见性 | 挂载后读一次 `settings.get` 的 `optimize.enabled`；未知时不渲染（避免闪现），关闭时不渲染；`window` 事件 `dsh-nonead-prompt-recall:settings` 可触发重读（P4 保存开关后派发） |
 | 草稿读取 | `shell.draftSnapshot` 优先、`shell.projection` 兜底（`draftFromShell`）；`input` 事件 + 800ms 轮询刷新派生状态，组件不订阅编辑器内部状态 |
 | 禁用条件 | `locked`（提交/不可用）→ 命令草稿 `hasCommand` → 文本空 → 超 8000 字符；附件不参与判定（§3.5） |
@@ -765,8 +772,8 @@ P0 已确认 L1 可行，所以这条不适用于当前宿主。仅当插件被�
 
 | 决策 | 落地 |
 | --- | --- |
-| 开关 | 设置 → 提示词历史 → 新增「提示词优化」卡片，`role=switch` 绑 `form.optimize.enabled`；保存时 patch 带 `optimize: { enabled, maxChars }`（**带回当前 maxChars**，避免只发 enabled 把用户自定义上限重置为 8000） |
-| 保存后同步按钮 | 保存成功后 `window.dispatchEvent(new CustomEvent('dsh-nonead-prompt-recall:settings'))`，活动区按钮监听该事件重读 `settings.get`（无需刷新页面） |
+| 开关 | 设置 → 提示词历史 → 「提示词优化」卡片，`role=switch` 绑 `form.optimize.enabled`；**点击即保存**（0.8.2 起）：直接 `settings.set` 只 patch `optimize: { enabled, maxChars }`（带回当前 maxChars，避免只发 enabled 把上限重置为 8000），不依赖页面级保存按钮 |
+| 开关即时同步按钮 | 写入成功后 `window.dispatchEvent(new CustomEvent('dsh-nonead-prompt-recall:settings'))`，输入框按钮监听该事件重读 `settings.get`（无需刷新页面） |
 | 只读查看器 | 折叠区「模型提示词（只读）」：`<pre>`（`tabIndex=0`、`aria-label`、`max-height:320px` 滚动、等宽、`pre-wrap`）+ 版本 badge + 字符数 + 复制按钮（`navigator.clipboard`，1.5 s 后回落「复制」）；**不渲染 textarea / 不保存 / 不提供恢复默认** |
 | 提示词来源 | 新增只读 RPC `optimize.prompt` → `{ version, prompt, chars }`，由宿主从 `lib/optimize-prompt.js` 的常量直接返回；客户端不复制提示词文本，避免两处漂移 |
 | 懒加载 | 首次展开时才请求 `optimize.prompt`，之后复用组件内缓存 |
@@ -774,6 +781,21 @@ P0 已确认 L1 可行，所以这条不适用于当前宿主。仅当插件被�
 | 构建顺序 | protocol → **i18n-optimize** → i18n → core → optimize → settings → optimize-button → client（合并代码依赖 `OPTIMIZE_DICTS` 先定义） |
 
 **English summary:** the settings page gains an optimize switch (saved with the current maxChars) and a lazily loaded, read-only prompt viewer fed by a new `optimize.prompt` RPC so the browser half never duplicates the prompt text; all copy lives in `src/i18n-optimize.js` (24 `opt*` keys × 8 locales) and is merged into the registered dictionary.
+
+---
+
+### 14.8 0.8.1 / 0.8.2 修复记录（2026-11-01）
+
+0.8.0 发布后由实测反馈修掉四处问题，均已在代码与 §1 的「实现偏差」段体现：
+
+| # | 问题 | 根因（含实测） | 修复 |
+| --- | --- | --- | --- |
+| 1 | 安装后无法启动 | `conversation.input.activity` 是**单占用者** slot，DSH 已在其中挂载自带语音输入；插件再注册会顶掉它，其客户端 entry 停在 `loading`，整站报 `web boot: 1 entry did not activate` 并进入恢复模式 | 改注册列表型 `conversation.input.right`；按钮自身 `order:1` 排到模型选择器右侧（该槽的锚在选择器之前且锚为 `display:contents`，重排锚无效） |
+| 2 | 旋转圆弧的圆心跑偏 | SMIL `<animateTransform type="rotate">` 的圆心在 Chromium 被忽略，圆弧绕原点公转；headless 逐帧截图测得包围盒中心每周期漂移约 21px | 改用 CSS `transform-box:view-box` + `transform-origin:50% 50%` + `@keyframes`，六个采样点漂移 0/0.5px；样式表改为首次渲染注入（已存在则刷新 `textContent`，旧页面也能拿到新规则） |
+| 3 | 设置开关要按保存才生效 | 开关只改页面本地表单，离开设置页即丢弃，四角星照旧显示 | 点击即 `settings.set`（只 patch `optimize` 块，不覆盖其它未保存的编辑）并即时通知输入框按钮 |
+| 4 | 点击无反应 | 取不到 composer shell 或 RPC 时静默返回 | 改为弹出失败 toast（`optFailed`），不再无声 |
+
+**English summary:** four post-0.8.0 defects — the single-occupant `activity` slot crash, SMIL's ignored rotation centre, a settings switch that only applied on Save, and a silent no-op click — are fixed by moving to the `conversation.input.right` list slot, CSS `transform-box` rotation, click-to-save, and an explicit failure toast.
 
 ---
 
@@ -981,7 +1003,7 @@ optimizing  旋转         取消优化              是（取消）
 done        撤销箭头     还原原文              是
 ```
 
-**English summary of the whole doc:** add a sparkle button to the composer via the official `conversation.input.activity` slot; it is enabled whenever the text segment is non-empty (attachments and `@` references do not disable it), calls one auxiliary host-side model request using the session's current route, keeps the draft during the call and replaces it only on success, then flips into a one-shot undo and waits for the user to send. `@` references are masked out of the request so only text is rewritten. A settings toggle in the existing Prompt History section (default on) hides the control entirely, and the built-in system prompt is read-only. No transcript messages, no history writes, no auto-send, and every failure keeps the original text.
+**English summary of the whole doc:** add a sparkle button to the composer tool row (list slot `conversation.input.right`, right of the model selector); it is enabled whenever the text segment is non-empty (attachments and `@` references do not disable it), calls one auxiliary host-side model request using the session's current route, keeps the draft during the call and replaces it only on success, then flips into a one-shot undo and waits for the user to send. `@` references are masked out of the request so only text is rewritten. A settings toggle in the existing Prompt History section (default on) hides the control entirely, and the built-in system prompt is read-only. No transcript messages, no history writes, no auto-send, and every failure keeps the original text.
 
 
 
