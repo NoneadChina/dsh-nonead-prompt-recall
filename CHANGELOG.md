@@ -6,7 +6,7 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 本文件记录所有值得注意的改动，格式参考 Keep a Changelog，版本号遵循语义化版本。
 
-## [0.8.2] - 2026-11-01
+## [0.8.1] - 2026-11-01
 
 ### Fixed / 修复
 

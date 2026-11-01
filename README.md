@@ -8,7 +8,7 @@
 
 A DeepSeek Harness plugin that gives the composer shell-style **prompt history recall**.
 
-Current version: **0.8.2**.
+Current version: **0.8.1**.
 
 - Press **↑** in an empty composer to load the last prompt you sent;
 - press **↑** again to walk further back;
