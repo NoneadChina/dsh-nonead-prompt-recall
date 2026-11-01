@@ -52,10 +52,15 @@ const OPT_CSS = `
 .dsh-pr-opt-btn:focus-visible{outline:2px solid var(--dsw-alias-border-focus);outline-offset:1px}
 .dsh-pr-opt-btn:disabled{color:var(--dsw-alias-label-disable);cursor:not-allowed}
 @media (pointer:coarse){.dsh-pr-opt-btn{width:32px;height:32px;min-width:32px}}
-.dsh-pr-opt-svg{width:16px;height:16px;display:block;overflow:visible}
-/* The busy rotation lives inside the SVG (<animateTransform>, centre 8 8).
- * A CSS animation here would stack a SECOND rotation about the element box and
- * visibly pull the arc off its own centre, so the stylesheet stays out of it. */
+.dsh-pr-opt-svg{width:16px;height:16px;display:block;overflow:visible;transform-box:view-box;transform-origin:50% 50%}
+/* Rotate with CSS, not SMIL. Chromium ignores the centre in an
+ * animateTransform rotate and pivots about the origin instead, so the arc
+ * visibly orbits the icon. transform-box:view-box + transform-origin:50% 50%
+ * pins the pivot to the viewBox centre (8 8). The animation is deliberately
+ * not disabled under prefers-reduced-motion: it only appears after an explicit
+ * click and is the sole feedback that work started. */
+.dsh-pr-opt-btn[data-mode="optimizing"] .dsh-pr-opt-svg{animation:dsh-pr-opt-spin .9s linear infinite}
+@keyframes dsh-pr-opt-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .dsh-pr-opt-toast{position:fixed;z-index:2147483000;max-width:280px;padding:6px 10px;border-radius:8px;font-size:12px;line-height:1.4;background:var(--dsw-alias-bg-layer-3);color:var(--dsw-alias-label-primary);border:1px solid var(--dsw-alias-border-l2);box-shadow:var(--dsw-shadow-lv2);pointer-events:none;transform:translate(-50%,-100%)}
 /* DSH wraps every slot outlet in an anchor whose inline style is
  * display:contents, so the anchor never becomes a flex item and an order
@@ -63,12 +68,15 @@ const OPT_CSS = `
  * moves it after the model-selector cell in the same toolbar row. */
 `;
 
-let optStyleReady = false;
-
 function ensureOptimizeStyle() {
-  if (optStyleReady || typeof document === 'undefined' || typeof document.getElementById !== 'function') return;
-  optStyleReady = true;
-  if (document.getElementById(OPT_STYLE_ID) !== null) return;
+  if (typeof document === 'undefined' || typeof document.getElementById !== 'function') return;
+  const existing = document.getElementById(OPT_STYLE_ID);
+  if (existing !== null) {
+    // Refresh in place: a long-lived page may still hold an older copy of these
+    // rules, and an id-only "already injected" check would keep it forever.
+    if (existing.textContent !== OPT_CSS) existing.textContent = OPT_CSS;
+    return;
+  }
   const style = document.createElement('style');
   style.id = OPT_STYLE_ID;
   style.textContent = OPT_CSS;
@@ -486,17 +494,9 @@ function OptimizeButton(props) {
       strokeLinecap: 'round',
       'aria-hidden': 'true',
     },
-    // CSS `animation` alone is fragile here: a prefers-reduced-motion media
-    // query or a stale injected <style> turns it off and the arc sits still.
-    // SMIL rides inside the SVG itself, so the arc always turns.
-    React.createElement('animateTransform', {
-      attributeName: 'transform',
-      type: 'rotate',
-      from: '0 8 8',
-      to: '360 8 8',
-      dur: '0.9s',
-      repeatCount: 'indefinite',
-    }),
+    // Rotation comes from the stylesheet (viewBox-centred CSS animation).
+    // Chromium ignores the pivot in an <animateTransform type="rotate"> and
+    // orbits the arc about the origin, so no SMIL here.
     React.createElement('path', { d: SPINNER_PATH }))
     : undoable
       ? React.createElement('svg', {
