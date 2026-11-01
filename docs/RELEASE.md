@@ -48,13 +48,14 @@ Restart DSH Desktop, refresh, then check:
 - log contains `[dsh-nonead-prompt-recall] host ready v0.8.2`;
 - the starter does not fall back to recovery mode (`web boot: N entries did not activate` must not appear — the 0.8.2 fix moved the optimize button into the list slot `conversation.input.right`);
 - Settings → 提示词历史 shows the history glyph in the nav, the v0.8.2 header/status layout, export / import / clear above the list, and the new **Prompt optimization** card (switch + read-only prompt viewer);
-- the sparkle button appears in the composer tool row next to the model selector and rewrites a non-empty draft;
+- the sparkle button appears to the right of the model selector and rewrites a non-empty draft;
+- clicking it switches the icon to a spinning arc that rotates **in place** at the icon centre (CSS `transform-box:view-box` + `transform-origin:50% 50%`); the undo arrow appears only after a successful rewrite, and a failure shows a toast;
 - switch Settings → General → Language across 中文 / English / 日本語 / Español / Français / Deutsch / Русский / Português and confirm the section label, page copy and `/prompt-recall status` follow the selection;
 - empty composer + ↑ recalls the newest prompt, ↑ walks older, ↓ walks back;
 - `/prompt-recall status` responds;
 - 导出 JSON downloads a file; 导入并预览 shows the preview and merges on confirm;
 - **提示词优化**：模型选择器右侧的四角星在空草稿时置灰、有文本时可点；点击后原文不动、成功后替换、返回箭头可撤销；含 `@` 引用的草稿改写后 chip 原位保留；助手流式输出期间仍可用；
-- 设置页把「提示词优化」关掉后四角星立即消失，重新开启后恢复；
+- 设置页把「提示词优化」**点击**关掉后四角星立即消失（点击即保存，无需再点页面级保存），重新开启后恢复；
 - 查看器展开显示提示词全文、版本、字符数，复制可用且无编辑入口；
 - restart DSH and confirm history and settings survive.
 

@@ -69,7 +69,7 @@ matching log lines.
 | L4 | Choose an invalid/oversized file | an error is shown and no history changes |
 | L5 | Click 取消 in the preview | nothing is imported |
 
-## Prompt optimization smoke / 提示词优化冒烟（0.8.0，17 步）
+## Prompt optimization smoke / 提示词优化冒烟（0.8.0 起，18 步）
 
 前提：设置 → 提示词历史里「提示词优化」开关为开（默认开），会话里至少有一个可用模型。
 Reload the page after a client change; restart the host after a `lib/` change.
@@ -89,7 +89,8 @@ Reload the page after a client change; restart the host after a `lib/` change.
 | O11 | 只放附件、不输入文字 | 按钮置灰，`title` 显示「输入内容后可优化」 |
 | O12 | 在输入框放超过 8000 字符的文本 | 按钮置灰，`title` 显示「文本超过 8000 字符」 |
 | O13 | 在助手回答**正在流式输出**时点击四角星 | 优化照常进行，不影响回答；「停止生成」不会取消优化 |
-| O14 | 设置里把「提示词优化」关掉并保存 | 回到输入框后四角星**消失**（无需刷新页面），再次开启后恢复 |
+| O14 | 设置里**点击**「提示词优化」开关（点击即保存，不需要再点页面级保存） | 回到输入框后四角星**消失**（无需刷新页面），再次点击开启后恢复 |
+| O15 | 点击四角星后盯住图标 | 图标变成**旋转圆弧**，绕自身中心原地旋转（不公转、不位移），直到结果返回 |
 | Q1 | 设置页展开「模型提示词（只读）」 | 显示提示词全文（等宽、可滚动）、版本 badge、字符数；没有可编辑控件 |
 | Q2 | 点击「复制」 | 按钮短暂显示「已复制」，剪贴板内容与查看器一致 |
 | Q3 | 检查八种语言（设置 → 通用 → 语言） | 按钮 tooltip、toast、设置卡片与查看器文案都跟随语言，无裸 key |

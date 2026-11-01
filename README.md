@@ -112,9 +112,10 @@ Since 0.8.0 a sparkle button sits in the composer tool row, to the right of the 
 - While the request runs the draft stays visible; only a successful rewrite replaces it, exactly once. Failures, timeouts, cancellation, or a draft you edited in the meantime leave your input untouched.
 - `@` references are preserved: every chip is masked as a `⟦C1⟧` sentinel before the model call and re-inserted at its new position only if the model kept every sentinel in order — reference content never reaches the model.
 - Attachments and images neither block nor take part in the rewrite; the button is disabled only when the text segment is empty or longer than 8000 characters.
+- While the request runs the icon becomes a **spinning arc** that turns in place at the icon centre, so a click always has visible feedback; a failed call shows a toast and leaves the draft untouched.
 - After a successful rewrite the icon becomes an undo arrow; one click restores the original draft (references included). Editing or sending drops that undo.
 - Turns do not collide: optimization is an independent auxiliary call, so it works while an answer is streaming, and cancelling it never stops the answer.
-- Settings → 提示词历史 → **Prompt optimization** hides the button or shows the built-in prompt read-only (version, character count, copy).
+- Settings → 提示词历史 → **Prompt optimization** hides the button or shows the built-in prompt read-only (version, character count, copy). The switch saves on click — no page-level Save needed.
 
 ## Commands
 

@@ -2,9 +2,10 @@
 
 English summary at the end of each major section.
 
-- 状态：设计稿（v1 草案，待评审后实施）
+- 状态：已实施（0.8.0 交付功能；0.8.2 修正落位、旋转与设置开关）
 - 变更：2026-11-01 追加「模型工作中仍可用」的并发要求（§1.1 #7、§3.6、§7、§9、§12）
-- 目标版本：0.8.0（minor：新增功能 + 新设置项）
+- 实现偏差（0.8.2 修正，以实际代码为准）：① 落位改用列表型 `conversation.input.right` + 按钮自身 `order:1`——原文选定的 `conversation.input.activity` 在 DSH 契约里是**单占用** slot 且已被自带语音输入占用，注册第二个占用者会顶掉它、使其客户端 entry 停在 `loading`，整个启动报 `web boot: 1 entry did not activate`；② 「工作中」用 CSS 旋转圆弧（`transform-box:view-box` + `transform-origin:50% 50%`），不用 SMIL——Chromium 会忽略 `<animateTransform type="rotate">` 的圆心并退化成绕原点公转（实测每个周期包围盒中心漂移 21px，CSS 形式 0px）；③ 设置开关点击即保存（`settings.set` 只 patch `optimize` 块），不再依赖页面级保存按钮。
+- 目标版本：0.8.0（minor：新增功能 + 新设置项）；落位与旋转修正随 0.8.2
 - 归属插件：`dsh-nonead-prompt-recall`
 - 相关文件：[src/client.js](../src/client.js)、[src/settings.js](../src/settings.js)、[src/i18n.js](../src/i18n.js)、[lib/index.js](../lib/index.js)、[lib/i18n.js](../lib/i18n.js)、[lib/settings.js](../lib/settings.js)
 
