@@ -17,8 +17,8 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed / 变更
 
-- The sparkle button now sits in the composer tool row next to the model selector, instead of between the selector and Send.
-- 四角星按钮现在位于输入框工具行、模型选择器旁，而非选择器与发送键之间。
+- The sparkle button now sits to the right of the model selector in the composer tool row (the slot itself renders before the selector, so the cell is reordered with CSS `order`), instead of between the selector and Send, and no longer competes with DSH's voice-input button.
+- 四角星按钮现在位于输入框工具行里、模型选择器**右侧**（该 slot 本身渲染在选择器之前，因此用 CSS `order` 把这一格移到右侧），既不在选择器与发送键之间，也不再与 DSH 自带的语音输入按钮争用同一插槽。
 
 ## [0.8.0] - 2026-11-01
 

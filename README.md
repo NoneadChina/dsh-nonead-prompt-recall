@@ -106,7 +106,7 @@ Export downloads a timestamped JSON file through the browser. Import opens a fil
 
 ## Prompt optimization
 
-Since 0.8.0 a sparkle button sits in the composer tool row, next to the model selector.
+Since 0.8.0 a sparkle button sits in the composer tool row, to the right of the model selector.
 
 - It rewrites the current draft with the session model; **you** review and send it — the plugin never sends, never clears the composer early, and never writes to your prompt history.
 - While the request runs the draft stays visible; only a successful rewrite replaces it, exactly once. Failures, timeouts, cancellation, or a draft you edited in the meantime leave your input untouched.
