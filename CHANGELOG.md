@@ -21,6 +21,8 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 - The sparkle button now sits to the right of the model selector in the composer tool row. DSH renders that slot's outlet before the selector and gives every outlet anchor an inline `display:contents`, so the reorder is applied to the button itself (`order:1`) rather than to the anchor; it also no longer competes with DSH's voice-input button.
 - 四角星按钮现在位于输入框工具行里、模型选择器**右侧**。DSH 会把该 slot 的锚渲染在选择器之前、且给每个锚内联 `display:contents`，因此重排发生在按钮自身（`order:1`）而不是锚上；它也不再与 DSH 自带的语音输入按钮争用同一插槽。
+- While an optimization runs the button now shows a spinning arc, so a click has visible feedback for the whole request; the undo arrow still appears only after a successful rewrite. A click that cannot start (no composer shell or RPC) now reports a failure toast instead of doing nothing.
+- 优化进行中按钮显示**旋转圆弧**，整段请求期间都有可见反馈；撤销箭头仍在改写成功后才会出现。点击无法开始（取不到输入框或 RPC）时改为弹出失败提示，不再静默无反应。
 
 ## [0.8.0] - 2026-11-01
 
