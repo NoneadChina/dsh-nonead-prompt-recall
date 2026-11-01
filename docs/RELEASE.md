@@ -4,7 +4,7 @@ Run from the repository root on Windows (Node 24) unless noted.
 
 在仓库根目录执行（Windows、Node 24）。
 
-Target version / 目标版本：**v0.8.1**。
+Target version / 目标版本：**v0.8.2**。
 
 ## 1. Pre-flight / 预检
 
@@ -45,9 +45,9 @@ bundle must load through `window.__ModuleLoader__` and export `apply`.
 
 Restart DSH Desktop, refresh, then check:
 
-- log contains `[dsh-nonead-prompt-recall] host ready v0.8.1`;
-- the starter does not fall back to recovery mode (`web boot: N entries did not activate` must not appear — the 0.8.1 fix moved the optimize button into the list slot `conversation.input.right`);
-- Settings → 提示词历史 shows the history glyph in the nav, the v0.8.1 header/status layout, export / import / clear above the list, and the new **Prompt optimization** card (switch + read-only prompt viewer);
+- log contains `[dsh-nonead-prompt-recall] host ready v0.8.2`;
+- the starter does not fall back to recovery mode (`web boot: N entries did not activate` must not appear — the 0.8.2 fix moved the optimize button into the list slot `conversation.input.right`);
+- Settings → 提示词历史 shows the history glyph in the nav, the v0.8.2 header/status layout, export / import / clear above the list, and the new **Prompt optimization** card (switch + read-only prompt viewer);
 - the sparkle button appears in the composer tool row next to the model selector and rewrites a non-empty draft;
 - switch Settings → General → Language across 中文 / English / 日本語 / Español / Français / Deutsch / Русский / Português and confirm the section label, page copy and `/prompt-recall status` follow the selection;
 - empty composer + ↑ recalls the newest prompt, ↑ walks older, ↓ walks back;
@@ -63,9 +63,9 @@ backup paths, and the 17-step prompt-optimization pass).
 
 ## 5. Publish / 发布
 
-The package is public: [dsh-nonead-prompt-recall](https://www.npmjs.com/package/dsh-nonead-prompt-recall). `0.7.0` is the latest published release (eight-language UI, `gitHead` bc51957); `0.8.0` (prompt optimization, README refresh and the 0.7.1 docs patch rolled together) and `0.8.1` (slot-conflict boot fix) are prepared and still have to be published. `0.6.3` added the metadata fix and `0.6.2` was the first version.
+The package is public: [dsh-nonead-prompt-recall](https://www.npmjs.com/package/dsh-nonead-prompt-recall). `0.7.0` is the latest published release (eight-language UI, `gitHead` bc51957); `0.8.0` (prompt optimization, README refresh and the 0.7.1 docs patch rolled together) and `0.8.2` (slot-conflict boot fix) are prepared and still have to be published. `0.6.3` added the metadata fix and `0.6.2` was the first version.
 
-包已公开发布：`0.7.0` 是最新已发布版本（八语言界面，`gitHead` bc51957）；`0.8.0`（提示词优化 + README 头部改版 + 0.7.1 文档补丁合并）与 `0.8.1`（插槽冲突导致的启动修复）已就绪、待发布。`0.6.3` 修了元数据，`0.6.2` 是首个版本。
+包已公开发布：`0.7.0` 是最新已发布版本（八语言界面，`gitHead` bc51957）；`0.8.0`（提示词优化 + README 头部改版 + 0.7.1 文档补丁合并）与 `0.8.2`（插槽冲突导致的启动修复）已就绪、待发布。`0.6.3` 修了元数据，`0.6.2` 是首个版本。
 
 Prerequisite: `npm login`. This account asks for proof-of-presence on every publish (OTP prompt or the browser URL npm prints), so publishing from a terminal the maintainer controls is the reliable path.
 
