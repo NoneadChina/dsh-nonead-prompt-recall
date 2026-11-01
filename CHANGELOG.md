@@ -14,6 +14,8 @@ adheres to [Semantic Versioning](https://semver.org/).
 - **安装后无法启动**：优化按钮原先注册进 `conversation.input.activity`，而该 slot 在 DSH 中是**单占用者**、并已被自带语音输入按钮占用；注册第二个占用者会顶掉它，使其客户端 entry 停在 `loading`，整个启动因此报 `web boot: 1 entry did not activate` 并进入恢复模式。现在改注册到列表型 slot `conversation.input.right`（提交按钮前的紧凑控件），可安全容纳第二个占用者。
 - The style tag is now injected on the button's first render instead of during `apply()`, so plugin activation no longer writes to the document head while DSH is still settling the client roster.
 - 样式表改在按钮首次渲染时注入，不再于 `apply()` 期间写 document head，插件激活不再打扰 DSH 结算客户端 roster。
+- **Settings switch did nothing until Save**: flipping "Prompt optimization" only edited the page's local form, so leaving the page discarded it — the star stayed visible and reopening Settings showed the switch back on. The switch now writes `settings.set` on click (only the `optimize` block, so an unfinished edit elsewhere survives) and notifies the composer button immediately.
+- **设置开关要按保存才生效**：「提示词优化」开关原先只改页面本地表单，离开页面即丢弃——四角星照旧显示、重进设置页开关又变回开。现在点击开关立即写入 `settings.set`（只提交 `optimize` 块，不覆盖其它未保存的编辑），并即时通知输入框按钮刷新。
 
 ### Changed / 变更
 

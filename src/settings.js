@@ -308,6 +308,25 @@ function SettingsSection(props) {
     announceSettings();
   }, t('saved'));
 
+  /**
+   * Flip the optimize switch and persist it right away.
+   *
+   * The switch lives inside the same form as the history fields, but a settings
+   * switch should take effect on click: leaving it to the page-level Save button
+   * means a click that looks applied is silently lost when the page is closed,
+   * which is exactly how "turn it off, the star is still there" gets reported.
+   * Only the `optimize` block is sent so an unfinished edit elsewhere survives.
+   */
+  const toggleOptimize = () => {
+    const next = form.optimize?.enabled === false;
+    const maxChars = Number(form.optimize?.maxChars) > 0 ? Number(form.optimize.maxChars) : 8000;
+    setOptimize(next);
+    void run('optimize', async () => {
+      await call('settings.set', { patch: { optimize: { enabled: next, maxChars } } });
+      announceSettings();
+    }, t('saved'));
+  };
+
   /** Open the read-only prompt viewer and fetch its text once. */
   const togglePrompt = async () => {
     const next = !promptOpen;
@@ -496,7 +515,7 @@ function SettingsSection(props) {
           role: 'switch',
           'aria-checked': form.optimize?.enabled !== false,
           className: `dsh-pr-switch${form.optimize?.enabled !== false ? ' is-on' : ''}`,
-          onClick: () => setOptimize(form.optimize?.enabled === false),
+          onClick: () => toggleOptimize(),
         }, h('span', { className: 'dsh-pr-knob' }))),
       h('div', { className: 'dsh-pr-viewer' },
         h('div', { className: 'dsh-pr-viewer-head' },
