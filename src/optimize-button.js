@@ -485,7 +485,19 @@ function OptimizeButton(props) {
       strokeWidth: 1.6,
       strokeLinecap: 'round',
       'aria-hidden': 'true',
-    }, React.createElement('path', { d: SPINNER_PATH }))
+    },
+    // CSS `animation` alone is fragile here: a prefers-reduced-motion media
+    // query or a stale injected <style> turns it off and the arc sits still.
+    // SMIL rides inside the SVG itself, so the arc always turns.
+    React.createElement('animateTransform', {
+      attributeName: 'transform',
+      type: 'rotate',
+      from: '0 8 8',
+      to: '360 8 8',
+      dur: '0.9s',
+      repeatCount: 'indefinite',
+    }),
+    React.createElement('path', { d: SPINNER_PATH }))
     : undoable
       ? React.createElement('svg', {
         className: 'dsh-pr-opt-svg',
