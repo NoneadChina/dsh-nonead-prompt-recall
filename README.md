@@ -8,7 +8,7 @@
 
 Two composer features for DeepSeek Harness: shell-style **prompt history recall** and one-click **prompt optimization**.
 
-Current version: **0.8.2**.
+Current version: **0.8.3**.
 
 **History recall**
 
@@ -115,7 +115,7 @@ The history file can be inspected directly:
 
 ## Settings page
 
-Open **Settings → 提示词历史** (the row is localized; an English UI reads **Prompt History**). The row uses a history glyph instead of the generic gear, and the page is one scrollable surface:
+Open **Settings → 提示词历史** (the row is localized; an English UI reads **Prompt History**). The row uses a history glyph instead of the generic gear. The page fills the settings column and scrolls as one surface — the status strip and the history card span the full width, while **Capture settings** and **Prompt optimization** sit side by side and collapse to a single column when the panel is narrow:
 
 - **Header** — plugin icon, version badge and a refresh button;
 - **Status** — capture state, entry count, current workspace and storage path;

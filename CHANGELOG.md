@@ -6,6 +6,18 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 本文件记录所有值得注意的改动，格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.8.3] - 2026-11-02
+
+### Fixed / 修复
+
+- **Settings page was boxed in twice**: the section root carried its own `max-width:800px`, `max-height:56vh` and `overflow-y:auto` on top of the host's `.options` column — which already supplies the 24px side gutters and the scroll container. The page therefore rendered inside a second, smaller scroll box instead of filling the settings panel. The root now lays out directly against the host column and owns no width, height or scrollbar.
+- **设置页被套了两层容器**：section 根节点除了宿主的 `.options`（已自带 24px 左右内边距与滚动）之外，又自己加了 `max-width:800px`、`max-height:56vh`、`overflow-y:auto`，页面因此被塞进一个更小的内层滚动盒、没有铺满设置面板。现在根节点直接按宿主列布局，不再自带宽高与滚动条。
+
+### Changed / 变更
+
+- **Settings page layout**: the page is a responsive grid now. The status strip (four stats with column dividers) and the history card span the full width, while **Capture settings** and **Prompt optimization** sit side by side and collapse back to one column when the panel is narrow. The header gained a bottom divider, cards a hover outline, and the empty list state an inset dashed panel instead of a bare line of text.
+- **设置页布局**：页面改为响应式网格——状态条（四列指标、带竖向分隔）与历史卡通栏，**捕获设置** 与 **提示词优化** 并排，面板变窄时自动叠回单列；页头加底部分隔线，卡片加悬停描边，列表空状态由一行灰字改为内嵌虚线框。
+
 ## [0.8.2] - 2026-11-01
 
 ### Fixed / 修复

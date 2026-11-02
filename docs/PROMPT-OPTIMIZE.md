@@ -2,7 +2,7 @@
 
 English summary at the end of each major section.
 
-- 状态：已实施（0.8.0 交付功能；0.8.2 修正落位、旋转与设置开关）
+- 状态：已实施（0.8.0 交付功能；0.8.2 修正落位、旋转与设置开关；0.8.3 重排设置页布局）
 - 变更：2026-11-01 追加「模型工作中仍可用」的并发要求（§1.1 #7、§3.6、§7、§9、§12）
 - 实现偏差（0.8.2 修正，以实际代码为准）：① 落位改用列表型 `conversation.input.right` + 按钮自身 `order:1`——原文选定的 `conversation.input.activity` 在 DSH 契约里是**单占用** slot 且已被自带语音输入占用，注册第二个占用者会顶掉它、使其客户端 entry 停在 `loading`，整个启动报 `web boot: 1 entry did not activate`；② 「工作中」用 CSS 旋转圆弧（`transform-box:view-box` + `transform-origin:50% 50%`），不用 SMIL——Chromium 会忽略 `<animateTransform type="rotate">` 的圆心并退化成绕原点公转（实测每个周期包围盒中心漂移 21px，CSS 形式 0px）；③ 设置开关点击即保存（`settings.set` 只 patch `optimize` 块），不再依赖页面级保存按钮。
 - 目标版本：0.8.0（minor：新增功能 + 新设置项）；落位与旋转修正随 0.8.2
@@ -796,6 +796,12 @@ P0 已确认 L1 可行，所以这条不适用于当前宿主。仅当插件被�
 | 4 | 点击无反应 | 取不到 composer shell 或 RPC 时静默返回 | 改为弹出失败 toast（`optFailed`），不再无声 |
 
 **English summary:** four post-0.8.0 defects — the single-occupant `activity` slot crash, SMIL's ignored rotation centre, a settings switch that only applied on Save, and a silent no-op click — are fixed by moving to the `conversation.input.right` list slot, CSS `transform-box` rotation, click-to-save, and an explicit failure toast.
+
+### 14.9 0.8.3 设置页布局（2026-11-02）
+
+设置页此前在宿主 `.options` 之外又自带 `max-width:800px`、`max-height:56vh`、`overflow-y:auto`，形成内层滚动盒、不铺满面板。0.8.3 移除这三项，改为自适应网格 `repeat(auto-fit,minmax(248px,1fr))`：状态条（四列指标、带竖向分隔）与历史卡通栏，捕获设置与提示词优化并排，面板变窄时自动叠为单列。宿主 `.options` 已提供 24px 左右内边距与滚动通道，插件根节点不再拥有宽度、高度与滚动条。
+
+**English summary:** 0.8.3 drops the section's own width, height and scrollbar — the host `.options` column already supplies the side gutters and the scroll container — and lays the page out as an auto-fit grid: full-width status strip and history card, capture settings beside prompt optimization.
 
 ---
 
