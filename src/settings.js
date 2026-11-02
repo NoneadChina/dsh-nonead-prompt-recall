@@ -125,6 +125,31 @@ const POLISH_CSS = `
 .dsh-pr-preview{border-left:3px solid var(--dsw-alias-link);border-radius:11px}
 .dsh-pr-callout{border-radius:11px;background:var(--dsw-alias-bg-layer-2)}
 .dsh-pr-kbd{display:inline-block;min-width:16px;padding:0 4px;margin:0 2px;border:1px solid var(--dsw-alias-border-l2);border-bottom-width:2px;border-radius:5px;background:var(--dsw-alias-bg-layer-2);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;line-height:16px;text-align:center;color:var(--dsw-alias-label-secondary)}
+/* Layout pass 2 (0.8.3 polish): one full-width column. The auto-fit grid used
+ * to give the two panes a third of the row each, so their text wrapped inside a
+ * narrow strip while the wide cards spanned everything — uneven card widths and
+ * a ragged column. A single column keeps every card the same width, gives the
+ * label/hint text room, and keeps the optimize card at the bottom. */
+.dsh-pr-root{grid-template-columns:minmax(0,1fr);gap:16px}
+.dsh-pr-card{padding:18px 20px}
+.dsh-pr-section-title{margin:0 0 14px;padding-bottom:11px;border-bottom:1px solid var(--dsw-alias-border-l2);gap:8px}
+.dsh-pr-section-title b{font-size:15px;letter-spacing:-.005em}
+.dsh-pr-section-title span{font-size:11.5px}
+.dsh-pr-row{padding:13px 0;gap:24px}
+.dsh-pr-rowtext{flex:1 1 auto;min-width:0}
+.dsh-pr-field{flex:0 0 auto}
+.dsh-pr-input{width:96px;height:32px;padding:0 11px;text-align:right}
+.dsh-pr-actions{margin-top:14px;padding-top:0;border-top:0}
+.dsh-pr-btn{height:32px;padding:0 14px;border-radius:9px}
+.dsh-pr-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.dsh-pr-stat{padding:2px 16px;gap:5px}
+.dsh-pr-v{font-size:15px;letter-spacing:-.01em}
+.dsh-pr-list{max-height:320px;overflow:auto}
+.dsh-pr-item{padding:10px 14px}
+.dsh-pr-time{width:104px}
+.dsh-pr-viewer-head{padding:10px 14px}
+.dsh-pr-callout{margin:12px 0}
+.dsh-pr-empty{margin-top:10px}
 [data-dsh-prompt-recall-nav] svg{display:none}
 [data-dsh-prompt-recall-nav]::before{content:'';flex:none;width:16px;height:16px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 3-6.7L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E") center/16px 16px no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 3-6.7L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E") center/16px 16px no-repeat}
 `;
