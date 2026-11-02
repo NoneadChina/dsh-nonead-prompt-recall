@@ -47,7 +47,7 @@ Restart DSH Desktop, refresh, then check:
 
 - log contains `[dsh-nonead-prompt-recall] host ready v0.8.3`;
 - the starter does not fall back to recovery mode (`web boot: N entries did not activate` must not appear — the 0.8.2 fix moved the optimize button into the list slot `conversation.input.right`);
-- Settings → 提示词历史 shows the history glyph in the nav, the v0.8.3 grid layout (the page fills the settings column: status strip and history span the full width, capture settings sits beside prompt optimization), export / import / clear above the list, and the **Prompt optimization** card (switch + read-only prompt viewer);
+- Settings → 提示词历史 shows the history glyph in the nav, the v0.8.3 grid layout (the page fills the settings column: the status strip and the history card span the full width, capture settings sits right under the strip, and the **Prompt optimization** card — switch plus read-only prompt viewer — is the last block at the bottom of the page), and export / import / clear above the history list;
 - the sparkle button appears to the right of the model selector and rewrites a non-empty draft;
 - clicking it switches the icon to a spinning arc that rotates **in place** at the icon centre (CSS `transform-box:view-box` + `transform-origin:50% 50%`); the undo arrow appears only after a successful rewrite, and a failure shows a toast;
 - switch Settings → General → Language across 中文 / English / 日本語 / Español / Français / Deutsch / Русский / Português and confirm the section label, page copy and `/prompt-recall status` follow the selection;

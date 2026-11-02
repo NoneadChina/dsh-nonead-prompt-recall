@@ -15,8 +15,8 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed / 变更
 
-- **Settings page layout**: the page is a responsive grid now. The status strip (four stats with column dividers) and the history card span the full width, while **Capture settings** and **Prompt optimization** sit side by side and collapse back to one column when the panel is narrow. The header gained a bottom divider, cards a hover outline, and the empty list state an inset dashed panel instead of a bare line of text.
-- **设置页布局**：页面改为响应式网格——状态条（四列指标、带竖向分隔）与历史卡通栏，**捕获设置** 与 **提示词优化** 并排，面板变窄时自动叠回单列；页头加底部分隔线，卡片加悬停描边，列表空状态由一行灰字改为内嵌虚线框。
+- **Settings page layout**: the page is a responsive grid now. The status strip (four stats with column dividers) and the history card span the full width; **Capture settings** sits directly under the strip, and **Prompt optimization** is the last card at the bottom of the page, after history management. The header gained a bottom divider, cards a hover outline, and the empty list state an inset dashed panel instead of a bare line of text.
+- **设置页布局**：页面改为响应式网格——状态条（四列指标、带竖向分隔）与历史卡通栏；**捕获设置** 紧随状态条，**提示词优化** 作为最底部的一张卡，排在历史管理之后。页头加底部分隔线，卡片加悬停描边，列表空状态由一行灰字改为内嵌虚线框。
 
 ## [0.8.2] - 2026-11-01
 
