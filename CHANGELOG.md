@@ -6,6 +6,13 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 本文件记录所有值得注意的改动，格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.8.4] - 2026-11-02
+
+### Fixed / 修复
+
+- **Every RPC failure collapsed into "invalid server-response failure"**: the host answered with `{ ok: false, error: { code, message } }`, but DSH's client requires `error.details` to be an object and otherwise throws `connection: invalid server-response failure` before the real message can reach the UI. A call to an endpoint the host did not serve therefore surfaced as an opaque connection error instead of "unknown endpoint". Both failure builders — the shared RPC channel (`lib/index.js`) and the optimize endpoint (`lib/optimize-host.js`) — now always carry `details`.
+- **每次 RPC 失败都被折叠成「invalid server-response failure」**：宿主返回 `{ ok: false, error: { code, message } }`，而 DSH 客户端要求 `error.details` 必须是对象，否则会在真实消息到达界面前就抛 `connection: invalid server-response failure`。因此调用宿主未提供的端点时，界面显示的是不知所云的连接错误，而不是「unknown endpoint」。现在通道（`lib/index.js`）与优化端点（`lib/optimize-host.js`）两处失败构造都会带上 `details`。
+
 ## [0.8.3] - 2026-11-02
 
 ### Fixed / 修复
@@ -15,8 +22,8 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed / 变更
 
-- **Settings page layout**: the page is a responsive grid now. The status strip (four stats with column dividers) and the history card span the full width; **Capture settings** sits directly under the strip, and **Prompt optimization** is the last card at the bottom of the page, after history management. The header gained a bottom divider, cards a hover outline, and the empty list state an inset dashed panel instead of a bare line of text.
-- **设置页布局**：页面改为响应式网格——状态条（四列指标、带竖向分隔）与历史卡通栏；**捕获设置** 紧随状态条，**提示词优化** 作为最底部的一张卡，排在历史管理之后。页头加底部分隔线，卡片加悬停描边，列表空状态由一行灰字改为内嵌虚线框。
+- **Settings page layout**: the page fills the settings column as a **single full-width column** — header → status strip → capture settings → history management → prompt optimization (the last card at the bottom). The header gained a bottom divider, every card title a divider, rows a 13px rhythm with 32px-tall controls, cards a hover outline, and the empty list state an inset dashed panel instead of a bare line of text.
+- **设置页布局**：页面铺满设置内容列，采用**单列全宽**——页头 → 运行状态 → 捕获设置 → 历史管理 → 提示词优化（最底部的一张卡）。页头加底部分隔线，每张卡片标题下加分隔线，行距 13px、控件高 32px，卡片加悬停描边，列表空状态由一行灰字改为内嵌虚线框。
 
 ## [0.8.2] - 2026-11-01
 

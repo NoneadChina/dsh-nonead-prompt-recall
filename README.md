@@ -8,7 +8,7 @@
 
 Two composer features for DeepSeek Harness: shell-style **prompt history recall** and one-click **prompt optimization**.
 
-Current version: **0.8.3**.
+Current version: **0.8.4**.
 
 **History recall**
 
