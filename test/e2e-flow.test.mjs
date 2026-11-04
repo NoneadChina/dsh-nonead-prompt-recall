@@ -70,8 +70,15 @@ function keyEvent(key, target) {
   };
 }
 
-/** Minimal Cordis host context capturing the event handler and RPC channel. */
-function makeHost() {
+/**
+ * Minimal Cordis host context capturing the event handler and RPC channel.
+ * @param {{requireWebServer?: boolean}} [options] - `true` (default) models
+ *   DSH >= 0.2.2-alpha.3, where `connection.rpc.handle` mounts its route through
+ *   `owner.webServer` and therefore throws on a connection-only fiber;
+ *   `false` models the older contract where `connection` alone is enough.
+ */
+function makeHost(options = {}) {
+  const { requireWebServer = true } = options;
   const listeners = new Map();
   let rpcHandler = null;
   const ctx = {
@@ -80,9 +87,28 @@ function makeHost() {
       listeners.set(type, handler);
     },
     inject(services, callback) {
-      // Real DSH hosts register the channel through `connection.rpc.handle`,
-      // whose owner fiber must also hold `webServer` (it mounts the HTTP route).
-      assert.deepEqual(services, ['connection', 'webServer']);
+      // Only `connection` is modelled here; `commands` and friends stay absent.
+      if (!services.includes('connection')) return;
+      const withWebServer = services.includes('webServer');
+      if (requireWebServer && !withWebServer) {
+        // Current DSH: the route owner needs webServer on this fiber.
+        callback({
+          root: {
+            connection: {
+              rpc: {
+                handle() {
+                  throw new Error('cannot get property "webServer" without inject');
+                },
+              },
+            },
+          },
+          effect() {},
+          get() {
+            return undefined;
+          },
+        });
+        return;
+      }
       callback({
         root: {
           connection: {
@@ -279,4 +305,25 @@ test('end to end: a submitted prompt is captured and recalled through the compos
   // Version is single-sourced from package.json.
   const pkg = JSON.parse(await readFile(join(ROOT, 'package.json'), 'utf8'));
   assert.equal(PLUGIN_VERSION, pkg.version);
+});
+
+test('the RPC channel also registers on hosts older than the webServer contract', async (t) => {
+  const home = await mkdtemp(join(tmpdir(), 'prompt-recall-legacy-'));
+  const previousHome = process.env.DSH_HOME;
+  process.env.DSH_HOME = home;
+  t.after(async () => {
+    if (previousHome === undefined) delete process.env.DSH_HOME;
+    else process.env.DSH_HOME = previousHome;
+    await sleep(75);
+    await rm(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  });
+
+  // Legacy fibre: `connection.rpc.handle` succeeds without `webServer`. The host
+  // must still expose the channel, otherwise every release before the contract
+  // change would lose history recall and the settings page.
+  const host = makeHost({ requireWebServer: false });
+  hostApply(host.ctx);
+  const rpc = host.rpc();
+  const ping = await rpc('ping', {});
+  assert.equal(ping.ok, true);
 });

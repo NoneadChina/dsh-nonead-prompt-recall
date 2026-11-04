@@ -19,6 +19,8 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 - **Settings nav row**: the section registers at `order: 99`, so it sits directly above the desktop-only 桌面设置 row (the desktop plugin owns order 100; built-in sections use 0/10/15) instead of below it. The row's leading child is now hidden as a whole rather than only its `svg`: an empty wrapper stayed in the flex row and kept one extra `gap`, pushing our label ~8px further right than every native row.
 - **设置项导航行**：section 改为 `order: 99`，直接排在「桌面设置」（桌面插件占用 100，内置分区为 0/10/15）之上，不再落到最后；行首子元素改为整体隐藏而非只隐藏 `svg`——空壳元素仍留在 flex 行里占一个 `gap`，导致文字比其它行多缩进约 8px。
+- **Host compatibility (current and previous DSH)**: the channel is now registered through `connection` first — the contract every 0.2.1-rc.x / early-0.2.2 host understands — and re-registered from a `['connection', 'webServer']` fibre only when the host rejects that call with the webServer error (0.2.2-alpha.3 and later). Older hosts never take the retry path, so history recall and the settings page keep working on both.
+- **宿主兼容（当前版本与之前版本）**：通道先按 `connection` 注册（0.2.1-rc.x / 早期 0.2.2 的契约都能满足），只有当宿主以 webServer 错误拒绝时，才改从 `['connection', 'webServer']` 的 fiber 重新注册（0.2.2-alpha.3 及以后）。旧宿主不会走重试分支，因此新旧两个版本的 DSH 都能正常使用历史召回与设置页。
 
 ## [0.8.4] - 2026-11-02
 
