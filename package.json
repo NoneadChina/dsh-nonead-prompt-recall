@@ -1,6 +1,6 @@
 {
   "name": "dsh-nonead-prompt-recall",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "Composer history for DeepSeek Harness: press ↑ in an empty input box to recall the previous prompt, ↑ again for older ones, ↓ to walk back; stored per workspace and survives restarts. Since 0.8.0 a sparkle button next to the model selector rewrites the draft with the current model while keeping @ references intact.",
   "type": "module",
   "main": "lib/index.js",

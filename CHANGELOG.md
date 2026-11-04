@@ -6,6 +6,13 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 本文件记录所有值得注意的改动，格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.8.6] - 2026-11-04
+
+### Fixed / 修复
+
+- **Startup stall → safe mode (critical)**: the webServer fallback added in 0.8.5 retried unconditionally inside its `catch`, and `ctx.inject` invokes the callback synchronously once the dependency resolves. On a host whose `connection.rpc.handle` keeps rejecting, that recursed forever during `apply()`, kept the desktop starter busy past its 60-second watchdog, and dropped DSH into safe mode with this plugin disabled. The retry is now bounded to one extra attempt (`rpcRetried`); a second failure logs a single line and leaves the channel unregistered instead of looping. Covered by a regression test that activates the plugin against a host rejecting every `rpc.handle` call.
+- **启动卡死 → 安全模式（严重）**：0.8.5 加的 webServer 兜底在 `catch` 里**无条件重试**，而 `ctx.inject` 在依赖就绪时是同步回调。当宿主的 `connection.rpc.handle` 一直拒绝时，`apply()` 会无限递归，桌面启动进程被占满直到 60 秒看门狗超时，DSH 进入安全模式并禁用本插件。现在重试上限为一次（`rpcRetried`），第二次失败只记一行日志并放弃注册，不再递归。已补回归测试：面对「每次 rpc.handle 都拒绝」的宿主，插件激活必须正常返回。
+
 ## [0.8.5] - 2026-11-04
 
 ### Fixed / 修复

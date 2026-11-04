@@ -78,7 +78,7 @@ function keyEvent(key, target) {
  *   `false` models the older contract where `connection` alone is enough.
  */
 function makeHost(options = {}) {
-  const { requireWebServer = true } = options;
+  const { requireWebServer = true, failWebServer = false } = options;
   const listeners = new Map();
   let rpcHandler = null;
   const ctx = {
@@ -90,8 +90,9 @@ function makeHost(options = {}) {
       // Only `connection` is modelled here; `commands` and friends stay absent.
       if (!services.includes('connection')) return;
       const withWebServer = services.includes('webServer');
-      if (requireWebServer && !withWebServer) {
-        // Current DSH: the route owner needs webServer on this fiber.
+      if (failWebServer || (requireWebServer && !withWebServer)) {
+        // `failWebServer` models a host whose rpc.handle can never succeed, even
+        // on the webServer-owning fibre: registration must give up, not recurse.
         callback({
           root: {
             connection: {
@@ -326,4 +327,32 @@ test('the RPC channel also registers on hosts older than the webServer contract'
   const rpc = host.rpc();
   const ping = await rpc('ping', {});
   assert.equal(ping.ok, true);
+});
+
+test('a host whose rpc.handle always rejects cannot stall activation', async (t) => {
+  const home = await mkdtemp(join(tmpdir(), 'prompt-recall-stall-'));
+  const previousHome = process.env.DSH_HOME;
+  process.env.DSH_HOME = home;
+  t.after(async () => {
+    if (previousHome === undefined) delete process.env.DSH_HOME;
+    else process.env.DSH_HOME = previousHome;
+    await sleep(75);
+    await rm(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  });
+
+  // Regression guard for the 0.8.5 startup stall: an unconditional webServer
+  // retry inside the catch recursed forever during apply(), keeping the desktop
+  // starter busy past its 60 s watchdog until DSH safe mode disabled the plugin.
+  const warnings = [];
+  const host = makeHost({ failWebServer: true });
+  host.ctx.logger.warn = (message) => { warnings.push(String(message)); };
+
+  const started = Date.now();
+  hostApply(host.ctx);
+  assert.ok(Date.now() - started < 2_000, 'apply() returned instead of retrying forever');
+  assert.throws(() => host.rpc(), /RPC channel was not registered/u);
+  assert.ok(
+    warnings.some((line) => /after webServer retry/u.test(line)),
+    `expected a bounded-retry warning, got: ${warnings.join(' | ')}`,
+  );
 });
