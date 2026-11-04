@@ -15,7 +15,7 @@
  */
 
 import { decideNav, draftText } from './core.js';
-import { CHANNEL, COMPOSER_SELECTOR } from './protocol.js';
+import { callChannel, COMPOSER_SELECTOR } from './protocol.js';
 import { registerSettingsSection } from './settings.js';
 import { registerOptimizeButton } from './optimize-button.js';
 
@@ -179,9 +179,9 @@ export function apply(ctx) {
 
   const fetchHistory = async ({ sessionId, cwd }) => {
     const connection = service('connection');
-    if (connection === null || connection === undefined || typeof connection.rpc?.call !== 'function') return null;
+    if (connection === null || connection === undefined) return null;
     try {
-      const result = await connection.rpc.call(CHANNEL, 'history', cwd !== '' ? { cwd } : { sessionId });
+      const result = await callChannel(connection, 'history', cwd !== '' ? { cwd } : { sessionId });
       if (result === null || typeof result !== 'object' || result.ok !== true) return null;
       const entries = result.value?.entries;
       if (!Array.isArray(entries)) return null;

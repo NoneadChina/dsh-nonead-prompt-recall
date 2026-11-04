@@ -6,6 +6,13 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 本文件记录所有值得注意的改动，格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.8.7] - 2026-11-04
+
+### Fixed / 修复
+
+- **Settings page 404 on current DSH — the actual fix**: `connection.rpc.handle` cannot work on DSH 0.2.2-alpha.3 at all. The route it mounts uses `owner.webServer`, where the owner is the connection service's own fiber, so it throws `cannot get property "webServer" without inject` no matter which fiber the plugin calls from — the 0.8.6 retry attempt proved this with a log line. The host now mounts one exact `/api/dsh-nonead-prompt-recall` route through `connection.fetch.register` (that API only needs `owner.effect`), and the browser half posts to it, falling back to the legacy channel whenever the host exposes no fetch route. Older DSH keeps the channel; current DSH finally gets a working settings page, history recall and prompt optimization.
+- **当前 DSH 上设置页 404 —— 真正的修复**：在 DSH 0.2.2-alpha.3 上，`connection.rpc.handle` 根本不可能成功。它挂路由时用的是 `owner.webServer`，而这个 owner 是 connection 服务自身的 fiber，所以无论插件从哪个 fiber 调用都会抛 `cannot get property "webServer" without inject`——0.8.6 的重试尝试已在日志里证实了这一点。宿主改为通过 `connection.fetch.register` 在 `/api/dsh-nonead-prompt-recall` 挂一条精确路由（该 API 只用 `owner.effect`，不需要 webServer），浏览器端向它 POST，宿主没有 fetch 路由时回退到旧通道。旧版 DSH 继续走通道，当前版本改走 fetch，设置页、历史召回与提示词优化都能用。
+
 ## [0.8.6] - 2026-11-04
 
 ### Fixed / 修复

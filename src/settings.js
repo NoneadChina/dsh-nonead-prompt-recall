@@ -10,7 +10,7 @@
  * module resolver.
  */
 
-import { CHANNEL, SETTINGS_SECTION } from './protocol.js';
+import { callChannel, SETTINGS_SECTION } from './protocol.js';
 import { DICTS } from './i18n.js';
 
 const NS = 'nonead-prompt-recall';
@@ -284,10 +284,7 @@ function SettingsSection(props) {
 
   const cwd = React.useRef('');
   const call = React.useCallback(async (endpoint, payload) => {
-    if (connection === null || connection === undefined || typeof connection.rpc?.call !== 'function') {
-      throw new Error('connection unavailable');
-    }
-    const result = await connection.rpc.call(CHANNEL, endpoint, payload);
+    const result = await callChannel(connection, endpoint, payload);
     if (result === null || typeof result !== 'object' || result.ok !== true) {
       throw new Error(result?.error?.message ?? 'rpc failed');
     }

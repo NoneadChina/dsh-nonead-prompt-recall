@@ -71,16 +71,19 @@ function keyEvent(key, target) {
 }
 
 /**
- * Minimal Cordis host context capturing the event handler and RPC channel.
- * @param {{requireWebServer?: boolean}} [options] - `true` (default) models
- *   DSH >= 0.2.2-alpha.3, where `connection.rpc.handle` mounts its route through
- *   `owner.webServer` and therefore throws on a connection-only fiber;
- *   `false` models the older contract where `connection` alone is enough.
+ * Minimal Cordis host context.
+ * @param {{mode?: 'legacy' | 'current' | 'broken'}} [options]
+ *   - `current` (default): DSH >= 0.2.2-alpha.3 — `connection.rpc.handle` throws
+ *     `cannot get property "webServer" without inject`, and the host exposes
+ *     `connection.fetch.register` for an exact `/api/...` route.
+ *   - `legacy`: 0.2.1-rc.x / early 0.2.2 — `rpc.handle` works, no fetch API.
+ *   - `broken`: neither carrier works; activation must still return promptly.
  */
 function makeHost(options = {}) {
-  const { requireWebServer = true, failWebServer = false } = options;
+  const { mode = 'current' } = options;
   const listeners = new Map();
   let rpcHandler = null;
+  let fetchRoute = null;
   const ctx = {
     logger: { info() {}, warn() {} },
     on(type, handler) {
@@ -89,44 +92,30 @@ function makeHost(options = {}) {
     inject(services, callback) {
       // Only `connection` is modelled here; `commands` and friends stay absent.
       if (!services.includes('connection')) return;
-      const withWebServer = services.includes('webServer');
-      if (failWebServer || (requireWebServer && !withWebServer)) {
-        // `failWebServer` models a host whose rpc.handle can never succeed, even
-        // on the webServer-owning fibre: registration must give up, not recurse.
-        callback({
-          root: {
-            connection: {
-              rpc: {
-                handle() {
-                  throw new Error('cannot get property "webServer" without inject');
-                },
-              },
-            },
-          },
-          effect() {},
-          get() {
-            return undefined;
-          },
-        });
-        return;
+      const connection = { rpc: {} };
+      if (mode === 'legacy') {
+        connection.rpc.handle = (channel, handler) => {
+          assert.equal(channel, '/dsh-nonead-prompt-recall');
+          rpcHandler = handler;
+          return () => {};
+        };
+      } else {
+        connection.rpc.handle = () => {
+          throw new Error('cannot get property "webServer" without inject');
+        };
       }
-      callback({
-        root: {
-          connection: {
-            rpc: {
-              handle(channel, handler) {
-                assert.equal(channel, '/dsh-nonead-prompt-recall');
-                rpcHandler = handler;
-                return () => {};
-              },
-            },
-          },
-        },
-        webServer: {
-          register() {
+      if (mode === 'current') {
+        connection.fetch = {
+          register(route) {
+            assert.equal(route.path, '/api/dsh-nonead-prompt-recall');
+            assert.deepEqual([...route.methods], ['POST']);
+            fetchRoute = route;
             return () => {};
           },
-        },
+        };
+      }
+      callback({
+        root: { connection },
         effect() {},
         get() {
           return undefined;
@@ -148,6 +137,22 @@ function makeHost(options = {}) {
     rpc() {
       assert.ok(rpcHandler, 'RPC channel was not registered');
       return rpcHandler;
+    },
+    fetchRoute() {
+      assert.ok(fetchRoute, 'fetch route was not registered');
+      return fetchRoute;
+    },
+    /** Drive one request through the registered `/api` fetch route. */
+    async callFetch(endpoint, payload) {
+      const route = this.fetchRoute();
+      const request = new Request(`http://localhost${route.path}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ endpoint, payload }),
+      });
+      const response = await route.fetch(request);
+      assert.equal(response.status, 200);
+      return response.json();
     },
   };
 }
@@ -182,7 +187,7 @@ test('end to end: a submitted prompt is captured and recalled through the compos
   });
 
   const cwd = 'D:/E2E/Workspace';
-  const host = makeHost();
+  const host = makeHost({ mode: 'legacy' });
   hostApply(host.ctx);
   const rpc = host.rpc();
 
@@ -322,7 +327,7 @@ test('the RPC channel also registers on hosts older than the webServer contract'
   // Legacy fibre: `connection.rpc.handle` succeeds without `webServer`. The host
   // must still expose the channel, otherwise every release before the contract
   // change would lose history recall and the settings page.
-  const host = makeHost({ requireWebServer: false });
+  const host = makeHost({ mode: 'legacy' });
   hostApply(host.ctx);
   const rpc = host.rpc();
   const ping = await rpc('ping', {});
@@ -344,7 +349,7 @@ test('a host whose rpc.handle always rejects cannot stall activation', async (t)
   // retry inside the catch recursed forever during apply(), keeping the desktop
   // starter busy past its 60 s watchdog until DSH safe mode disabled the plugin.
   const warnings = [];
-  const host = makeHost({ failWebServer: true });
+  const host = makeHost({ mode: 'broken' });
   host.ctx.logger.warn = (message) => { warnings.push(String(message)); };
 
   const started = Date.now();
@@ -352,7 +357,33 @@ test('a host whose rpc.handle always rejects cannot stall activation', async (t)
   assert.ok(Date.now() - started < 2_000, 'apply() returned instead of retrying forever');
   assert.throws(() => host.rpc(), /RPC channel was not registered/u);
   assert.ok(
-    warnings.some((line) => /after webServer retry/u.test(line)),
-    `expected a bounded-retry warning, got: ${warnings.join(' | ')}`,
+    warnings.some((line) => /fetch\.register is unavailable/u.test(line)),
+    `expected a no-carrier warning, got: ${warnings.join(' | ')}`,
   );
+});
+
+test('the current host serves the settings endpoints over the /api fetch route', async (t) => {
+  const home = await mkdtemp(join(tmpdir(), 'prompt-recall-fetch-'));
+  const previousHome = process.env.DSH_HOME;
+  process.env.DSH_HOME = home;
+  t.after(async () => {
+    if (previousHome === undefined) delete process.env.DSH_HOME;
+    else process.env.DSH_HOME = previousHome;
+    await sleep(75);
+    await rm(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  });
+
+  // DSH >= 0.2.2-alpha.3 rejects every plugin `rpc.handle` call, so the plugin
+  // must fall back to `connection.fetch.register` — otherwise the browser's
+  // settings page dies with `transport failure …: HTTP 404`.
+  const host = makeHost({ mode: 'current' });
+  hostApply(host.ctx);
+  assert.throws(() => host.rpc(), /RPC channel was not registered/u);
+
+  const ping = await host.callFetch('ping', {});
+  assert.equal(ping.ok, true);
+
+  const settings = await host.callFetch('settings.get', {});
+  assert.equal(settings.ok, true, `settings.get failed: ${JSON.stringify(settings)}`);
+  assert.equal(typeof settings.value?.settings, 'object');
 });

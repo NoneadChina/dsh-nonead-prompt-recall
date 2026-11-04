@@ -4,7 +4,7 @@ Run from the repository root on Windows (Node 24) unless noted.
 
 在仓库根目录执行（Windows、Node 24）。
 
-Target version / 目标版本：**v0.8.6**。
+Target version / 目标版本：**v0.8.7**。
 
 ## 1. Pre-flight / 预检
 
@@ -45,7 +45,7 @@ bundle must load through `window.__ModuleLoader__` and export `apply`.
 
 Restart DSH Desktop, refresh, then check:
 
-- the desktop starter finishes within its 60-second watchdog (no `web boot` stall, no safe-mode banner with this plugin disabled), and the log contains `[dsh-nonead-prompt-recall] host ready v0.8.6` with **no** `RPC channel registration failed: cannot get property "webServer" without inject` line (0.8.5 registers the channel under `['connection', 'webServer']`; without it the settings page sits on "Loading…" forever);
+- the desktop starter finishes within its 60-second watchdog (no `web boot` stall, no safe-mode banner with this plugin disabled), and the log contains `[dsh-nonead-prompt-recall] host ready v0.8.7` with **no** `RPC channel registration failed: cannot get property "webServer" without inject` line (0.8.5 registers the channel under `['connection', 'webServer']`; without it the settings page sits on "Loading…" forever);
 - the starter does not fall back to recovery mode (`web boot: N entries did not activate` must not appear — the 0.8.2 fix moved the optimize button into the list slot `conversation.input.right`);
 - Settings → 提示词历史 opens with real data (never a permanent "读取中…"), the nav row sits directly **above** the desktop-only 桌面设置 row with the same icon/label spacing as native rows, and the page is the v0.8.5 single-column layout (header → status strip → capture settings → history management → **Prompt optimization** as the last card at the bottom), export / import / clear above the history list, and clicking **模型提示词（只读）** expands the built-in prompt with its version and character count — a failure there must read like `unknown endpoint: …`, never `connection: invalid server-response failure` (0.8.4 puts `details` on every failure envelope, which is what DSH's client requires);
 - the sparkle button appears to the right of the model selector and rewrites a non-empty draft;
@@ -64,9 +64,9 @@ backup paths, and the 17-step prompt-optimization pass).
 
 ## 5. Publish / 发布
 
-The package is public: [dsh-nonead-prompt-recall](https://www.npmjs.com/package/dsh-nonead-prompt-recall). `0.8.4` is the latest published release — it shipped 0.8.0 / 0.8.2 / 0.8.3 together (prompt optimization, the slot-conflict boot fix, the settings-page layout and the RPC failure envelope). `0.8.5` (settings page stuck on "Loading…", nav order) and `0.8.6` (startup-stall → safe-mode hotfix) are prepared and still have to be published. `0.6.3` added the metadata fix and `0.6.2` was the first version.
+The package is public: [dsh-nonead-prompt-recall](https://www.npmjs.com/package/dsh-nonead-prompt-recall). `0.8.4` is the latest published release — it shipped 0.8.0 / 0.8.2 / 0.8.3 together (prompt optimization, the slot-conflict boot fix, the settings-page layout and the RPC failure envelope). `0.8.5` (settings page stuck on "Loading…", nav order), `0.8.6` (startup-stall → safe-mode hotfix) and `0.8.7` (settings-page 404 on current DSH, now served over the `/api` fetch route) are prepared and still have to be published. `0.6.3` added the metadata fix and `0.6.2` was the first version.
 
-包已公开发布：`0.8.4` 是最新已发布版本——0.8.0 / 0.8.2 / 0.8.3 一并随 0.8.4 发布（提示词优化、插槽冲突导致的启动修复、设置页布局、RPC 失败封套）。`0.8.5`（设置页卡在「读取中…」、导航顺序）与 `0.8.6`（启动卡死→安全模式的热修）已就绪、待发布。`0.6.3` 修了元数据，`0.6.2` 是首个版本。
+包已公开发布：`0.8.4` 是最新已发布版本——0.8.0 / 0.8.2 / 0.8.3 一并随 0.8.4 发布（提示词优化、插槽冲突导致的启动修复、设置页布局、RPC 失败封套）。`0.8.5`（设置页卡在「读取中…」、导航顺序）、`0.8.6`（启动卡死→安全模式的热修）与 `0.8.7`（当前 DSH 上设置页 404，改用 `/api` fetch 路由）已就绪、待发布。`0.6.3` 修了元数据，`0.6.2` 是首个版本。
 
 Prerequisite: `npm login`. This account asks for proof-of-presence on every publish (OTP prompt or the browser URL npm prints), so publishing from a terminal the maintainer controls is the reliable path.
 

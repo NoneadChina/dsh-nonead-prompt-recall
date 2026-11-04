@@ -21,7 +21,7 @@
  * `test/optimize-button.test.mjs` can cover the state transitions directly.
  */
 
-import { CHANNEL, ENDPOINT_OPTIMIZE } from './protocol.js';
+import { callChannel, ENDPOINT_OPTIMIZE } from './protocol.js';
 import { buildDraftDocument, draftFromShell, isEmptyText, isOverLimit, maskDraft, unmaskDraft } from './optimize.js';
 import { DICTS } from './i18n.js';
 
@@ -313,12 +313,7 @@ function OptimizeButton(props) {
     let alive = true;
     const load = () => {
       try {
-        const rpc = connection?.rpc;
-        if (typeof rpc?.call !== 'function') {
-          setEnabled(true);
-          return;
-        }
-        void Promise.resolve(rpc.call(CHANNEL, 'settings.get', sessionId === '' ? {} : { sessionId }))
+        void Promise.resolve(callChannel(connection, 'settings.get', sessionId === '' ? {} : { sessionId }))
           .then((result) => {
             if (!alive) return;
             setEnabled(result?.value?.settings?.optimize?.enabled !== false);
@@ -403,8 +398,7 @@ function OptimizeButton(props) {
 
   const start = async () => {
     const shellNow = shellFor(conversation, sessionId);
-    const rpc = connection?.rpc;
-    if (shellNow === null || typeof rpc?.call !== 'function') {
+    if (shellNow === null) {
       // Never fail silently: a click that does nothing reads as a broken button.
       showToastAt(buttonRef.current, t(TOAST_KEY.failed));
       return;
@@ -425,7 +419,7 @@ function OptimizeButton(props) {
 
     let result;
     try {
-      result = await rpc.call(CHANNEL, ENDPOINT_OPTIMIZE, {
+      result = await callChannel(connection, ENDPOINT_OPTIMIZE, {
         sessionId,
         text: masked.text,
         masked: masked.count > 0,
