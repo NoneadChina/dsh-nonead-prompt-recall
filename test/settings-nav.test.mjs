@@ -86,7 +86,11 @@ test('the settings nav row gets the history-icon marker', async () => {
   assert.equal(navButton.hasAttribute('data-dsh-prompt-recall-nav'), true);
   assert.equal(otherButton.hasAttribute('data-dsh-prompt-recall-nav'), false);
   const css = styles[0]?.textContent ?? '';
-  assert.match(css, /\[data-dsh-prompt-recall-nav\] svg\{display:none\}/u);
+  // The gear is removed and replaced by a mask glyph; the row's leading child is
+  // hidden as a whole so no empty flex item keeps its `gap` (that extra 8px was
+  // what pushed our label further right than every native row).
+  assert.match(css, /\[data-dsh-prompt-recall-nav\]>:first-child\{display:none/u);
+  assert.match(css, /\[data-dsh-prompt-recall-nav\] svg\{display:none/u);
   assert.match(css, /\[data-dsh-prompt-recall-nav\]::before/u);
   assert.match(css, /stroke-width='2'/u);
 });

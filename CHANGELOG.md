@@ -15,6 +15,11 @@ adheres to [Semantic Versioning](https://semver.org/).
 - **A failed first load now says so**: the section kept rendering "Loading…" even after the fetch rejected, because the error only went into a note that the loading branch never rendered. A failed load now shows the real message plus a Retry button, instead of an endless spinner that looks like a slow host.
 - **首次加载失败现在会明说**：取数被拒后页面仍一直显示「读取中…」，因为错误只写进了加载分支根本不渲染的 note。现在加载失败会显示真实错误信息与「重试」按钮，不再伪装成宿主很慢。
 
+### Changed / 变更
+
+- **Settings nav row**: the section registers at `order: 99`, so it sits directly above the desktop-only 桌面设置 row (the desktop plugin owns order 100; built-in sections use 0/10/15) instead of below it. The row's leading child is now hidden as a whole rather than only its `svg`: an empty wrapper stayed in the flex row and kept one extra `gap`, pushing our label ~8px further right than every native row.
+- **设置项导航行**：section 改为 `order: 99`，直接排在「桌面设置」（桌面插件占用 100，内置分区为 0/10/15）之上，不再落到最后；行首子元素改为整体隐藏而非只隐藏 `svg`——空壳元素仍留在 flex 行里占一个 `gap`，导致文字比其它行多缩进约 8px。
+
 ## [0.8.4] - 2026-11-02
 
 ### Fixed / 修复
