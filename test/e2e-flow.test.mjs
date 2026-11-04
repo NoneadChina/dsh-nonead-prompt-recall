@@ -80,7 +80,9 @@ function makeHost() {
       listeners.set(type, handler);
     },
     inject(services, callback) {
-      assert.deepEqual(services, ['connection']);
+      // Real DSH hosts register the channel through `connection.rpc.handle`,
+      // whose owner fiber must also hold `webServer` (it mounts the HTTP route).
+      assert.deepEqual(services, ['connection', 'webServer']);
       callback({
         root: {
           connection: {
@@ -91,6 +93,11 @@ function makeHost() {
                 return () => {};
               },
             },
+          },
+        },
+        webServer: {
+          register() {
+            return () => {};
           },
         },
         effect() {},

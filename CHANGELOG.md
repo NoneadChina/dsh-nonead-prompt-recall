@@ -6,6 +6,15 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 本文件记录所有值得注意的改动，格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.8.5] - 2026-11-04
+
+### Fixed / 修复
+
+- **Settings page stuck on "Loading…"**: the host registered the RPC channel inside `ctx.inject(['connection'], …)`, but DSH's `connection.rpc.handle` mounts its HTTP route through `owner.webServer` — with only `connection` declared, the registration threw `cannot get property "webServer" without inject`, the channel never existed, every `settings.get` failed, and the page rendered its `view === null` branch as "读取中…" forever. The channel is now registered under `['connection', 'webServer']`.
+- **设置页永远停在「读取中…」**：宿主在 `ctx.inject(['connection'], …)` 里注册 RPC 通道，而 DSH 的 `connection.rpc.handle` 要通过 `owner.webServer` 挂载 HTTP 路由；只声明 `connection` 时注册会抛 `cannot get property "webServer" without inject`，通道根本不存在，`settings.get` 全部失败，页面的 `view === null` 分支就一直显示「读取中…」。现在改为在 `['connection', 'webServer']` 下注册。
+- **A failed first load now says so**: the section kept rendering "Loading…" even after the fetch rejected, because the error only went into a note that the loading branch never rendered. A failed load now shows the real message plus a Retry button, instead of an endless spinner that looks like a slow host.
+- **首次加载失败现在会明说**：取数被拒后页面仍一直显示「读取中…」，因为错误只写进了加载分支根本不渲染的 note。现在加载失败会显示真实错误信息与「重试」按钮，不再伪装成宿主很慢。
+
 ## [0.8.4] - 2026-11-02
 
 ### Fixed / 修复
