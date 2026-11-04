@@ -115,13 +115,15 @@ The history file can be inspected directly:
 
 ## Settings page
 
-Open **Settings → 提示词历史** (the row is localized; an English UI reads **Prompt History**). The row uses a history glyph instead of the generic gear. The page fills the settings column and scrolls as one surface — the status strip and the history card span the full width, while **Capture settings** and **Prompt optimization** sit side by side and collapse to a single column when the panel is narrow:
+Open **Settings → 提示词历史** (the row is localized; an English UI reads **Prompt History**). The row uses a history glyph instead of the generic gear and sits directly above the desktop-only **桌面设置** row. The page fills the settings column as one full-width column and scrolls as a single surface: header → status strip → capture settings → history → prompt optimization (the last card at the bottom):
 
 - **Header** — plugin icon, version badge and a refresh button;
 - **Status** — capture state, entry count, current workspace and storage path;
 - **Capture settings** — enable switch, per-workspace cap (1–5000 entries), retention days (0 = forever), with unit-suffixed inputs and Save / validation feedback;
-- **Prompt optimization** — enable switch for the composer button (saved on click) and a collapsible, read-only viewer for the built-in model prompt: version badge, character count, copy button, no editor and no "restore default";
-- **History** — export / import / clear sit above the recent list, so they stay reachable in a short window; the list shows the five newest prompts for the current workspace.
+- **History** — export / import / clear sit above the recent list, so they stay reachable in a short window; the list shows the five newest prompts for the current workspace;
+- **Prompt optimization** — enable switch for the composer button (saved on click) and a collapsible, read-only viewer for the built-in model prompt: version badge, character count, copy button, no editor and no "restore default".
+
+If the first load fails, the page shows the real error and a **Retry** button instead of staying on "Loading…".
 
 Export downloads a timestamped JSON file through the browser. Import opens a file picker, parses the JSON in the page (8MB / 20,000-entry limits) and shows the file name, entry count, source workspace and the first five prompts before you confirm the merge.
 

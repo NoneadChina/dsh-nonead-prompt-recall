@@ -52,12 +52,14 @@ matching log lines.
 
 | # | Action / 操作 | Expected / 预期 |
 | --- | --- | --- |
-| S1 | Open Settings → 提示词历史 | the row uses the history glyph (not a gear); the page shows the header, status tiles, capture settings and history |
+| S0 | Open Settings and look at the nav rail | **提示词历史** sits directly above **桌面设置**, with the same icon-to-label spacing as every native row |
+| S1 | Open Settings → 提示词历史 | the row uses the history glyph (not a gear); the page shows real data (never a permanent "读取中…"), then header, status tiles, capture settings, history and the prompt-optimization card last |
 | S2 | Turn capture off, click 保存设置 | the status pill switches to 已关闭 |
 | S3 | Set the cap to 100, save | the saved hint appears and the entry count obeys the cap |
 | S4 | Click 导出 JSON | the browser downloads `prompt-recall-<key>-<timestamp>.json` |
 | S5 | Click 清空 → 确认清空 | the recent list becomes empty |
 | S6 | Make the window shorter | the page scrolls internally; export / import / clear stay reachable above the list |
+| S7 | Force a load failure (stop the host's RPC channel, then reopen the page) | the page shows the real error plus a **重试** button instead of an endless "读取中…" |
 
 ## Backup export / import preview / 备份导出与导入预览
 

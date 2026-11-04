@@ -2,7 +2,7 @@
 
 English summary at the end of each major section.
 
-- 状态：已实施（0.8.0 交付功能；0.8.2 修正落位、旋转与设置开关；0.8.3 重排设置页布局）
+- 状态：已实施（0.8.0 交付功能；0.8.2 修正落位、旋转与设置开关；0.8.3 重排设置页布局；0.8.4 失败封套补 `details`；0.8.5 修复设置页读取中、导航顺序与新旧宿主兼容）
 - 变更：2026-11-01 追加「模型工作中仍可用」的并发要求（§1.1 #7、§3.6、§7、§9、§12）
 - 实现偏差（0.8.2 修正，以实际代码为准）：① 落位改用列表型 `conversation.input.right` + 按钮自身 `order:1`——原文选定的 `conversation.input.activity` 在 DSH 契约里是**单占用** slot 且已被自带语音输入占用，注册第二个占用者会顶掉它、使其客户端 entry 停在 `loading`，整个启动报 `web boot: 1 entry did not activate`；② 「工作中」用 CSS 旋转圆弧（`transform-box:view-box` + `transform-origin:50% 50%`），不用 SMIL——Chromium 会忽略 `<animateTransform type="rotate">` 的圆心并退化成绕原点公转（实测每个周期包围盒中心漂移 21px，CSS 形式 0px）；③ 设置开关点击即保存（`settings.set` 只 patch `optimize` 块），不再依赖页面级保存按钮。
 - 目标版本：0.8.0（minor：新增功能 + 新设置项）；落位与旋转修正随 0.8.2
@@ -802,6 +802,17 @@ P0 已确认 L1 可行，所以这条不适用于当前宿主。仅当插件被�
 设置页此前在宿主 `.options` 之外又自带 `max-width:800px`、`max-height:56vh`、`overflow-y:auto`，形成内层滚动盒、不铺满面板。0.8.3 移除这三项，改为自适应网格 `repeat(auto-fit,minmax(248px,1fr))`：状态条（四列指标、带竖向分隔）与历史卡通栏，捕获设置与提示词优化并排，面板变窄时自动叠为单列。宿主 `.options` 已提供 24px 左右内边距与滚动通道，插件根节点不再拥有宽度、高度与滚动条。
 
 **English summary:** 0.8.3 drops the section's own width, height and scrollbar — the host `.options` column already supplies the side gutters and the scroll container — and lays the page out as an auto-fit grid: full-width status strip and history card, capture settings beside prompt optimization.
+
+### 14.10 0.8.4 / 0.8.5 修复记录（2026-11-02 ~ 11-04）
+
+| 版本 | 问题 | 根因（含实测） | 修复 |
+| --- | --- | --- | --- |
+| 0.8.4 | 只读查看器报 `connection: invalid server-response failure` | 宿主失败封套只带 `code`/`message`；DSH 客户端 `rpc.ts` 要求 `error.details` 为对象，否则把真实错误换成通用连接错误 | `lib/index.js` 的 `rpcFailure` 与 `lib/optimize-host.js` 的 `failure` 统一补 `details = {}` |
+| 0.8.5 | 设置页永远停在「读取中…」 | `connection.rpc.handle` 经 `owner.webServer.register(route)` 挂 HTTP 路由；只 `inject(['connection'])` 会抛 `cannot get property "webServer" without inject`，通道从未注册，`settings.get` 全 404 | 先按旧契约注册，捕获 webServer 错误后改用 `['connection','webServer']` 重试，`rpcRegistered` 防重复（新旧宿主都可用） |
+| 0.8.5 | 加载失败也显示「读取中…」 | 错误只写进 `note`，而 `view === null` 分支提前 return，不渲染 note | 新增 `loadError` 状态：首载失败显示真实错误 + 「重试」按钮 |
+| 0.8.5 | 导航行排最后、文字比其它行右移 | section `order: 120` 大于桌面设置的 100；图标只隐藏了内部 `svg`，空壳元素仍占一个 flex `gap` | `order: 99`（紧贴桌面设置之上）；改为 `>:first-child{display:none}` 整体隐藏行首子元素 |
+
+**English summary:** 0.8.4 adds the object-typed `error.details` DSH's client requires on failures; 0.8.5 fixes the settings page hanging on "Loading…" (the RPC channel now registers under `['connection', 'webServer']` when the host demands it, with a connection-only fallback for older hosts), surfaces real load errors with a Retry button, and moves the nav row above 桌面设置 with native icon spacing.
 
 ---
 
