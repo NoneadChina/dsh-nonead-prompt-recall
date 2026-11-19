@@ -6,6 +6,15 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 本文件记录所有值得注意的改动，格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.8.8] - 2026-11-19
+
+### Changed / 变更
+
+- **Fetch carrier first, legacy channel second**: 0.8.7 tried `connection.rpc.handle` first and only fell back to `connection.fetch.register` after catching the webServer error. On DSH 0.2.2-alpha.3 and later that first call can never succeed — `connection`'s inject list is only `['credentials']`, and `dsh-base/cordis.patch.yml` adds no `webServer` row to it, so `owner.webServer` never resolves on that fiber — which meant every single startup paid one guaranteed throw before mounting the working route. Registration now tries the Fetch registry first and reaches for `rpc.handle` only when the host exposes no `connection.fetch` (0.2.1-rc.x / early 0.2.2). Behaviour is unchanged on both ends; only the startup path is quieter and one call shorter.
+- **先试 Fetch 载具，再试旧通道**：0.8.7 先调 `connection.rpc.handle`，捕获 webServer 错误后才回落到 `connection.fetch.register`。在 DSH 0.2.2-alpha.3 及以后，第一次调用不可能成功——`connection` 的 inject 列表只有 `['credentials']`，而 `dsh-base/cordis.patch.yml` 也没有给它补 `webServer` row，所以 `owner.webServer` 在那条 fiber 上永远解析不到——等于每次启动都要先白抛一次异常才挂上真正可用的路由。现在改为优先 Fetch 注册表，只有宿主没有 `connection.fetch` 时（0.2.1-rc.x / 早期 0.2.2）才走 `rpc.handle`。两端行为不变，只是启动路径更安静、少一次调用。
+- **Draft reads use documented facades**: reading the composer draft preferred `shell.draftSnapshot` and fell back to `shell.projection`, which is a `private get` in the host's type declarations. The fallback chain is now `draftSnapshot` → `state.getSnapshot().draft` → `projection`, so the private getter is only the last resort. The plain-text helper used by history capture follows the same order.
+- **草稿读取改用官方 facade**：读取输入框草稿原本优先 `shell.draftSnapshot`、回落到 `shell.projection`，而后者在宿主类型声明里是 `private get`。现在回落链为 `draftSnapshot` → `state.getSnapshot().draft` → `projection`，私有 getter 只作最后兜底；历史捕获用的纯文本读取也按同一顺序。
+
 ## [0.8.7] - 2026-11-04
 
 ### Fixed / 修复

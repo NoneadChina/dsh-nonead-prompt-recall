@@ -25,9 +25,21 @@ export const inject = ['sessions', 'slots', 'locale', 'connection'];
 /** How long programmatic draft writes suppress the input-reset listener. */
 const PROGRAMMATIC_GRACE_MS = 250;
 
-/** Text fields the harness uses to expose the semantic draft. */
+/**
+ * Text fields the harness uses to expose the semantic draft.
+ * Public shapes first (`draftSnapshot`, then `InputState.draft` through
+ * `state.getSnapshot()`), the private `projection` getter last.
+ */
 function projectionText(shell) {
   try {
+    const snapshot = shell?.draftSnapshot;
+    if (snapshot !== null && typeof snapshot === 'object' && typeof snapshot.text === 'string') {
+      return snapshot.text;
+    }
+    const state = shell?.state?.getSnapshot?.();
+    if (state !== null && typeof state === 'object' && typeof state.draft === 'string') {
+      return state.draft;
+    }
     const projection = shell?.projection;
     if (projection !== null && typeof projection === 'object' && typeof projection.clipboardText === 'string') {
       return projection.clipboardText;

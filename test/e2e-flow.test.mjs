@@ -348,6 +348,9 @@ test('a host whose rpc.handle always rejects cannot stall activation', async (t)
   // Regression guard for the 0.8.5 startup stall: an unconditional webServer
   // retry inside the catch recursed forever during apply(), keeping the desktop
   // starter busy past its 60 s watchdog until DSH safe mode disabled the plugin.
+  // Since 0.8.8 the Fetch registry is tried first, so on a host that exposes no
+  // `connection.fetch` the plugin goes straight to the legacy channel and
+  // reports the combined failure once.
   const warnings = [];
   const host = makeHost({ mode: 'broken' });
   host.ctx.logger.warn = (message) => { warnings.push(String(message)); };
@@ -357,8 +360,12 @@ test('a host whose rpc.handle always rejects cannot stall activation', async (t)
   assert.ok(Date.now() - started < 2_000, 'apply() returned instead of retrying forever');
   assert.throws(() => host.rpc(), /RPC channel was not registered/u);
   assert.ok(
-    warnings.some((line) => /fetch\.register is unavailable/u.test(line)),
+    warnings.some((line) => /no fetch carrier|no host endpoint carrier/u.test(line)),
     `expected a no-carrier warning, got: ${warnings.join(' | ')}`,
+  );
+  assert.ok(
+    warnings.some((line) => /cannot get property "webServer" without inject/u.test(line)),
+    `expected the host's rejection to be reported, got: ${warnings.join(' | ')}`,
   );
 });
 
