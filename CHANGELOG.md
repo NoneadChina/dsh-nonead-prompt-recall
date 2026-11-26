@@ -6,6 +6,13 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 本文件记录所有值得注意的改动，格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.8.10] - 2026-11-26
+
+### Fixed / 修复
+
+- **The host endpoint never mounted on DSH 0.2.3-alpha.2**: `registerChannel` read the connection service as `scope?.root?.connection` first. Alpha.2's cordis rejects `root` on a context that never injected it — `Error: cannot get property "root" without inject` — so the callback threw before `connection.fetch.register` ran, no route was ever mounted, and the client fell back to the legacy channel that 0.2.2 removed. The settings page and history then failed with `transport failure for /dsh-nonead-prompt-recall/settings.get: HTTP 405`. The connection now resolves through `scope.get('connection')` on the main path, with the `root` hop kept only as a `try`-guarded fallback; the `/prompt-recall` command's `commands` lookup got the same treatment.
+- **DSH 0.2.3-alpha.2 上宿主端点从未挂载**：`registerChannel` 先用 `scope?.root?.connection` 取 connection。alpha.2 的 cordis 对未 inject `root` 的 context 直接抛 `Error: cannot get property "root" without inject`，回调在 `connection.fetch.register` 之前就中断，路由一个都没挂上，客户端只好回退到 0.2.2 已移除的旧通道，设置页与历史于是报 `transport failure for /dsh-nonead-prompt-recall/settings.get: HTTP 405`。连接改用 `scope.get('connection')` 作主路径，`root` 一跳降级为 `try` 兜底；`/prompt-recall` 命令取 `commands` 同样处理。
+
 ## [0.8.9] - 2026-11-26
 
 ### Changed / 变更
