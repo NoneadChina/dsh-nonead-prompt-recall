@@ -11,9 +11,17 @@ Target version / 目标版本：**v0.8.7**。
 ```powershell
 npm run check                      # build + syntax + all tests
 node scripts/build-client.mjs --check
+npm run compat                     # 24 contracts × every version engines.dsh claims
 ```
 
-Expected: tests all pass, `lib/client.js is up to date`.
+Expected: tests all pass, `lib/client.js is up to date`, and the matrix prints
+`0 required failure(s)` for all 14 claimed versions (details: [COMPAT.md](COMPAT.md)).
+Run `npm run compat` **before** bumping `engines.dsh`: it is what proves the
+claim, and it is also where a new release shows up as a new column.
+
+预期：测试全过、`lib/client.js is up to date`，矩阵在 14 个声称版本上打印
+`0 required failure(s)`（详见 [COMPAT.md](COMPAT.md)）。`engines.dsh` 改动之前先跑
+`npm run compat`——它是"声称"的取证手段，新版本也会在这里变成新的一列。
 
 ## 2. Package contents / 包内容
 

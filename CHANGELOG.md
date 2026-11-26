@@ -6,6 +6,22 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 本文件记录所有值得注意的改动，格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.8.11] - 2026-11-26
+
+### Added / 新增
+
+- **A contract matrix against every DSH version we claim**: `scripts/contract-matrix.mjs` (and `npm run compat`) downloads the publisher's own packages for each version `engines.dsh` claims and asserts that every host contract this plugin uses is still present, naming the file and line that proves it. The full run over all 14 claimed versions (0.2.1-rc.1 … 0.2.3-alpha.2, 24 contracts) reports **310 present cells and zero required failures**; the 26 non-present cells are the two contracts below, both of which already ship a fallback. Results and maintenance notes live in `docs/COMPAT.md`.
+- **对每个声称支持的 DSH 版本做契约矩阵**：`scripts/contract-matrix.mjs`（`npm run compat`）对 `engines.dsh` 声称的每个版本，拉发布者自己的包，逐条断言本插件用到的宿主契约仍然存在，并指出证据文件与行。14 个声称版本（0.2.1-rc.1 … 0.2.3-alpha.2）× 24 条契约的实测为 **310 格命中、0 条 required 失败**；26 格缺失即下述两条，均已有回退。结果与维护说明见 `docs/COMPAT.md`。
+
+### Fixed / 修复
+
+- **Recall went empty when the host relabels `retainedBy`**: the session filter only accepted `retainedBy.mainView > 0`. No claimed DSH version declares that key — `retainedBy` is typed `Partial<Record<SessionReferenceSource, number>>` and the published sources never name it — so a host that renames the source would have left the candidate list empty and ↑ would silently do nothing. The filter now treats a finite positive `mainView` as retained, honours an explicit `0`/negative as "not the main view", and otherwise falls back to "any retained source is non-zero". Three client tests cover those branches.
+- **宿主改叫 `retainedBy` 时召回变空**：会话过滤只认 `retainedBy.mainView > 0`。没有任何声称版本声明该键（类型是 `Partial<Record<SessionReferenceSource, number>>`，发布源码从不写它），宿主一旦改名候选列表就为空、按 ↑ 毫无反应。现在有限正值视为保留，显式 `0`/负数尊重宿主判定、排除，其余情况退回"任一 retainedBy 计数非零"。三个客户端测试覆盖这些分支。
+
+### Changed / 变更
+
+- `npm run compat` / `npm run compat:offline` added; both check the 14 claimed versions against the cached tarballs under the git-ignored `.tmp/compat/`.
+
 ## [0.8.10] - 2026-11-26
 
 ### Fixed / 修复

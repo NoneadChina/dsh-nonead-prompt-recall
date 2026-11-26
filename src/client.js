@@ -86,7 +86,31 @@ export function apply(ctx) {
     }
   };
 
-  /** Main-view sessions, most recently updated first. */
+  const anyRetained = (retainedBy) => Object.values(retainedBy).some((count) => Number(count) > 0);
+
+  /**
+   * Whether the main view still retains this session.
+   *
+   * `retainedBy.mainView` is the host's own label for "the UI is showing this
+   * one", and it is the only source that means exactly that. It is a runtime
+   * label rather than a published contract: the 0.2.3-alpha.2 client sources
+   * declare the type as `Partial<Record<SessionReferenceSource, number>>` and
+   * never name the key, while the shipped bundle still writes it. So when the
+   * key is absent we accept any retained source instead of dropping every
+   * session; when the host wrote `mainView: 0` we honour that zero and skip.
+   */
+  const isRetained = (retainedBy) => {
+    if (retainedBy === null || typeof retainedBy !== 'object') return false;
+    const hasMainView = Object.prototype.hasOwnProperty.call(retainedBy, 'mainView');
+    const mainView = Number(retainedBy.mainView);
+    if (Number.isFinite(mainView) && mainView > 0) return true;
+    // A finite zero (or negative) is the host saying "not the main view" for a
+    // session it does list, so it stays excluded here.
+    if (hasMainView && Number.isFinite(mainView)) return false;
+    return anyRetained(retainedBy);
+  };
+
+  /** Retained sessions, most recently updated first. */
   const candidateSessionIds = () => {
     const snapshot = listSnapshot();
     const byId = snapshot?.byId;
@@ -95,9 +119,7 @@ export function apply(ctx) {
     return ids
       .filter((id) => {
         const row = byId[id];
-        return row !== null && typeof row === 'object'
-          && row.retainedBy !== null && typeof row.retainedBy === 'object'
-          && Number(row.retainedBy.mainView) > 0;
+        return row !== null && typeof row === 'object' && isRetained(row.retainedBy);
       })
       .sort((a, b) => (Number(byId[b]?.updatedAt) || 0) - (Number(byId[a]?.updatedAt) || 0));
   };

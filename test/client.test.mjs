@@ -89,13 +89,13 @@ function makeShell(el, calls, options = {}) {
   };
 }
 
-function makeCtx({ el, shell, entries, call }) {
+function makeCtx({ el, shell, entries, call, row }) {
   const sessions = {
     list: {
       getSnapshot: () => ({
         ids: ['s1'],
         byId: {
-          s1: { cwd: 'D:/Work/Demo', retainedBy: { mainView: 1 }, updatedAt: 10 },
+          s1: row ?? { cwd: 'D:/Work/Demo', retainedBy: { mainView: 1 }, updatedAt: 10 },
         },
       }),
     },
@@ -318,4 +318,73 @@ test('an empty history leaves the composer alone', async () => {
   await tick();
   assert.deepEqual(calls, []);
   assert.equal(event.defaultPrevented, false);
+});
+
+test('a session whose retainedBy lacks mainView still counts as retained', async () => {
+  const doc = new FakeDocument();
+  globalThis.document = doc;
+  const bundle = await loadBundle();
+
+  const el = new FakeElement();
+  const calls = [];
+  const shell = makeShell(el, calls);
+  // 0.2.3-alpha.2 types retainedBy as Partial<Record<SessionReferenceSource,
+  // number>> and never names mainView, so a host that labels the source
+  // differently must not lose recall for every session.
+  const { ctx } = makeCtx({
+    el,
+    shell,
+    entries: ['改名来源仍可召回'],
+    row: { cwd: 'D:/Work/Demo', retainedBy: { draft: 1 }, updatedAt: 10 },
+  });
+  bundle.apply(ctx);
+  doc.emit('focusin', { target: el });
+
+  doc.emit('keydown', keyEvent('ArrowUp', el));
+  await tick();
+  assert.deepEqual(calls, ['改名来源仍可召回']);
+});
+
+test('a session the host marks mainView: 0 stays excluded', async () => {
+  const doc = new FakeDocument();
+  globalThis.document = doc;
+  const bundle = await loadBundle();
+
+  const el = new FakeElement();
+  const calls = [];
+  const shell = makeShell(el, calls);
+  const { ctx } = makeCtx({
+    el,
+    shell,
+    entries: ['不该被召回'],
+    row: { cwd: 'D:/Work/Demo', retainedBy: { mainView: 0, draft: 1 }, updatedAt: 10 },
+  });
+  bundle.apply(ctx);
+  doc.emit('focusin', { target: el });
+
+  doc.emit('keydown', keyEvent('ArrowUp', el));
+  await tick();
+  assert.deepEqual(calls, [], 'an explicit zero is the host saying "not the main view"');
+});
+
+test('a session with no retainedBy at all is skipped', async () => {
+  const doc = new FakeDocument();
+  globalThis.document = doc;
+  const bundle = await loadBundle();
+
+  const el = new FakeElement();
+  const calls = [];
+  const shell = makeShell(el, calls);
+  const { ctx } = makeCtx({
+    el,
+    shell,
+    entries: ['不该被召回'],
+    row: { cwd: 'D:/Work/Demo', updatedAt: 10 },
+  });
+  bundle.apply(ctx);
+  doc.emit('focusin', { target: el });
+
+  doc.emit('keydown', keyEvent('ArrowUp', el));
+  await tick();
+  assert.deepEqual(calls, []);
 });

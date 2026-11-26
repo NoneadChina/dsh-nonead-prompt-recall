@@ -283,11 +283,14 @@ node scripts/build-client.mjs --check   # 产物与源码不一致时失败
 - [docs/PROMPT-OPTIMIZE.md](docs/PROMPT-OPTIMIZE.md) — 优化的设计文档：交互规格、RPC 契约、错误码、遮罩规则与模型提示词；
 - [docs/E2E.md](docs/E2E.md) — 手动端到端验收矩阵（按键、命令、设置页、备份、提示词优化）；
 - [docs/RELEASE.md](docs/RELEASE.md) — 发布前检查、打包与发布/回滚步骤；
+- [docs/COMPAT.md](docs/COMPAT.md) — DSH 兼容矩阵：`npm run compat` 如何逐个版本取证、实测结论与扩展方法；
 - 仓库：<https://github.com/NoneadChina/dsh-nonead-prompt-recall> · 问题反馈：<https://github.com/NoneadChina/dsh-nonead-prompt-recall/issues>。
 
 ## 兼容性
 
-- 宿主：DSH 0.2.1-rc.3（Nonead DSH Desktop 2.1.11）实测可用；
-- 依赖的宿主约定：`[data-composer-input]`、`conversation.input.shell(id).setDraft()`、`sessions.list` 快照的 `cwd` / `retainedBy.mainView`、`session/event` 的 `user/message`、`conversation.input.right` 这个**列表型** slot（经 `ctx.slots.inject` + `ctx.slots.register` 注册）、`ctx.get('llm').stream(...)` 及其终止 `finish` 块、`Session.requestContext()` 取最近一次 route、以及插件 RPC 通道上的 `settings.get/set`。
+- 宿主：DSH 0.2.3-alpha.2（Nonead DSH Desktop）为主测目标，更早的 0.2.x 通过下述回退继续可用。`engines.dsh` 声称的**每个**版本都由 `npm run compat` 机械核对：24 条契约 × 14 个版本，实测 **310 格命中、0 条 required 失败**；表格与维护方式见 [docs/COMPAT.md](docs/COMPAT.md)；
+- 依赖的宿主约定：`[data-composer-input]`、`conversation.input.shell(id).setDraft()`、`sessions.list` 快照的 `cwd` / `retainedBy`、`session/event` 的 `user/message`、`conversation.input.right` 这个**列表型** slot（经 `ctx.slots.inject` + `ctx.slots.register` 注册）、`ctx.get('llm').stream(...)` 及其终止 `finish` 块、`Session.requestContext()` 取最近一次 route、以及插件 RPC 通道上的 `settings.get/set`。
+- 样式：0.2.3+ 走客户端模块的 `meta()` 工厂，由 renderer 安装并打上 `data-plugin`/`data-path`；不支持 `meta()` 的旧宿主仍由插件自己注入 `<style>`，两个 helper 见到 `style[data-plugin="dsh-nonead-prompt-recall"]` 就直接返回，因此任何宿主上都只有一份样式。
+- `retainedBy.mainView` 是**运行时标签、不是发布契约**：14 个声称版本都没声明该键（类型为 `Partial<Record<SessionReferenceSource, number>>`），但运行中的应用确实会写它。过滤规则：有限正值视为保留；显式 `0` 尊重宿主判定、排除；键缺失或非数值时退回"任一 retainedBy 计数非零"，宿主改名也不会让召回变空。
 - **刻意不用** `conversation.input.activity`：DSH 把它声明为单占用者 slot，并已在其中挂载自带语音输入按钮。再注册一个占用者会把它顶掉，整个启动报 `web boot: 1 entry did not activate`，DSH 直接进恢复模式。新增控件请用 `conversation.input.right` 这类列表槽。
-- 宿主升级后若这些约定变化，需要同步适配，改动集中在 `lib/index.js`、`lib/optimize-host.js`、`src/client.js`、`src/optimize-button.js`。
+- 宿主升级后若这些约定变化，需要同步适配，改动集中在 `lib/index.js`、`lib/optimize-host.js`、`src/client.js`、`src/optimize-button.js`；新增宿主 API 调用时记得在 `scripts/contract-matrix.mjs` 补一条断言。

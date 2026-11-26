@@ -1,6 +1,6 @@
 {
   "name": "dsh-nonead-prompt-recall",
-  "version": "0.8.10",
+  "version": "0.8.11",
   "description": "Composer history for DeepSeek Harness: press ↑ in an empty input box to recall the previous prompt, ↑ again for older ones, ↓ to walk back; stored per workspace and survives restarts. Since 0.8.0 a sparkle button next to the model selector rewrites the draft with the current model while keeping @ references intact.",
   "type": "module",
   "main": "lib/index.js",
@@ -24,7 +24,9 @@
   "scripts": {
     "build:client": "node scripts/build-client.mjs",
     "test": "node scripts/build-client.mjs && node --test --test-isolation=none \"test/*.test.mjs\"",
-    "check": "node --check lib/index.js && npm test"
+    "check": "node --check lib/index.js && npm test",
+    "compat": "node scripts/contract-matrix.mjs --all",
+    "compat:offline": "node scripts/contract-matrix.mjs --all --offline"
   },
   "dsh": {
     "bundle": {
