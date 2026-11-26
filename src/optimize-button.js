@@ -33,6 +33,10 @@ export const ACTIVITY_SLOT = 'conversation.input.right';
 
 const OPT_STYLE_ID = 'dsh-nonead-prompt-recall-optimize';
 const OPT_SETTINGS_EVENT = 'dsh-nonead-prompt-recall:settings';
+/** Owning package name, matching the client-module id and the host's `data-plugin` marker. */
+const PLUGIN_ID = 'dsh-nonead-prompt-recall';
+/** Selector for any stylesheet this plugin's bundle already installed through the host. */
+const PLUGIN_STYLE_ATTR = `data-plugin="${PLUGIN_ID}"`;
 
 /**
  * Local strings for the two languages this stage ships; the i18n stage moves
@@ -70,6 +74,11 @@ const OPT_CSS = `
 
 function ensureOptimizeStyle() {
   if (typeof document === 'undefined' || typeof document.getElementById !== 'function') return;
+  // Hosts that read the bundle's `meta()` stylesheets (DSH >= 0.2.2) install these
+  // rules themselves and mark them with data-plugin; injecting a second copy would
+  // duplicate every selector. Older hosts never produce such a node, so the manual
+  // injection below stays the only source there.
+  if (typeof document.querySelector === 'function' && document.querySelector(`style[${PLUGIN_STYLE_ATTR}]`) != null) return;
   const existing = document.getElementById(OPT_STYLE_ID);
   if (existing !== null) {
     // Refresh in place: a long-lived page may still hold an older copy of these
@@ -79,6 +88,7 @@ function ensureOptimizeStyle() {
   }
   const style = document.createElement('style');
   style.id = OPT_STYLE_ID;
+  if (typeof style.setAttribute === 'function') style.setAttribute('data-plugin', PLUGIN_ID);
   style.textContent = OPT_CSS;
   document.head?.appendChild(style);
 }

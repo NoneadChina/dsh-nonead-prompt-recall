@@ -6,6 +6,15 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 本文件记录所有值得注意的改动，格式参考 Keep a Changelog，版本号遵循语义化版本。
 
+## [0.8.9] - 2026-11-26
+
+### Changed / 变更
+
+- **Stylesheets move into the client module's `meta()`**: DSH 0.2.2 gave client modules a `meta()` factory whose `stylesheets` map the renderer installs itself, tagging each node with `data-plugin` and `data-path`. The bundle now declares its three sheets there (`src/optimize-button.css`, `src/settings.css`, `src/settings-polish.css`), so the host owns injection and disposal instead of each factory appending a `<style>` by hand. The manual path stays for older hosts, and both helpers now return early when they find a `style[data-plugin="dsh-nonead-prompt-recall"]` node — without that check a 0.2.2+ host would get every selector twice.
+- **样式改由客户端模块的 `meta()` 提供**：DSH 0.2.2 给客户端模块加了 `meta()` 工厂，其中的 `stylesheets` 由 renderer 自行安装，并给每个节点打上 `data-plugin` 与 `data-path`。bundle 现在在这里声明三段样式（`src/optimize-button.css`、`src/settings.css`、`src/settings-polish.css`），注入与销毁交给宿主，不再由各 factory 手写 `<style>`。旧宿主仍走手动注入；两个 helper 在发现 `style[data-plugin="dsh-nonead-prompt-recall"]` 节点时直接返回——没有这一步，0.2.2+ 宿主上每条选择器都会被装两遍。
+- **Verified against DSH 0.2.3-alpha.2**: the host contracts this plugin touches were re-read on alpha.2 source — `connection.fetch.register` unchanged (`ConnectionFetchRoute` still `{ path, methods, requestBody, fetch }`, and `rpc.handle` still throws for third-party callers), `session/event` still delivers `(session, event)` with `user/message`'s `event.data` being the message itself, `commands.register`/`CommandResult` unchanged, and `ctx.slots.inject(name, () => ctx.slots.register(...))` still the documented registration path. No behavioural change was needed on any of them.
+- **已对照 DSH 0.2.3-alpha.2 核查**：逐条重读了本插件涉及的宿主契约——`connection.fetch.register` 未变（`ConnectionFetchRoute` 仍是 `{ path, methods, requestBody, fetch }`，`rpc.handle` 对第三方调用方仍抛错），`session/event` 仍以 `(session, event)` 回调且 `user/message` 的 `event.data` 就是 message 本身，`commands.register`/`CommandResult` 未变，`ctx.slots.inject(name, () => ctx.slots.register(...))` 仍是文档化的注册方式。以上均无需改动。
+
 ## [0.8.8] - 2026-11-19
 
 ### Changed / 变更

@@ -4,11 +4,11 @@
 
 [![npm version](https://img.shields.io/npm/v/dsh-nonead-prompt-recall.svg?logo=npm&logoColor=white&label=npm&cacheSeconds=300)](https://www.npmjs.com/package/dsh-nonead-prompt-recall) [![npm downloads](https://img.shields.io/npm/dm/dsh-nonead-prompt-recall.svg?logo=npm&logoColor=white&label=downloads&cacheSeconds=300)](https://www.npmjs.com/package/dsh-nonead-prompt-recall) [![CI](https://img.shields.io/github/actions/workflow/status/NoneadChina/dsh-nonead-prompt-recall/ci.yml?branch=main&label=CI&logo=github)](https://github.com/NoneadChina/dsh-nonead-prompt-recall/actions) [![tag](https://img.shields.io/github/v/tag/NoneadChina/dsh-nonead-prompt-recall?label=tag&logo=git&logoColor=white)](https://github.com/NoneadChina/dsh-nonead-prompt-recall/tags) [![stars](https://img.shields.io/github/stars/NoneadChina/dsh-nonead-prompt-recall?logo=github)](https://github.com/NoneadChina/dsh-nonead-prompt-recall/stargazers) [![license](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
-[![node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org) [![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.1-4B6BFB)](./docs/RELEASE.md) [![tests](https://img.shields.io/badge/tests-122%20passing-brightgreen)](./test) [![languages](https://img.shields.io/badge/languages-8-8A2BE2)](./locale) [![platform](https://img.shields.io/badge/platform-DSH%20web-2F6FEB)](./package.json)
+[![node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org) [![dsh](https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.1-4B6BFB)](./docs/RELEASE.md) [![tests](https://img.shields.io/badge/tests-130%20passing-brightgreen)](./test) [![languages](https://img.shields.io/badge/languages-8-8A2BE2)](./locale) [![platform](https://img.shields.io/badge/platform-DSH%20web-2F6FEB)](./package.json)
 
 Two composer features for DeepSeek Harness: shell-style **prompt history recall** and one-click **prompt optimization**.
 
-Current version: **0.8.7**.
+Current version: **0.8.9**.
 
 **History recall**
 
@@ -288,7 +288,8 @@ node scripts/build-client.mjs --check   # fail when lib/client.js is stale
 
 ## Compatibility
 
-- Host: DSH 0.2.1-rc.3 (Nonead DSH Desktop 2.1.11), verified;
+- Host: DSH 0.2.3-alpha.2 (Nonead DSH Desktop), contracts re-read on that source; older 0.2.x keeps working through the fallbacks below;
 - Host contracts relied upon: `[data-composer-input]`, `conversation.input.shell(id).setDraft()`, the `cwd` / `retainedBy.mainView` fields of the `sessions.list` snapshot, `session/event`'s `user/message`, the `conversation.input.right` **list** slot (registered through `ctx.slots.inject` + `ctx.slots.register`), `ctx.get('llm').stream(...)` with its terminal `finish` chunk, `Session.requestContext()` for the last logged route, and `settings.get` / `settings.set` over the plugin's RPC channel.
+- Stylesheets ride the client module's `meta()` factory (DSH 0.2.2+) so the renderer installs them under `data-plugin` / `data-path`; the factories still inject a `<style>` themselves on hosts that ignore `meta`, and both skip when they find a `style[data-plugin="dsh-nonead-prompt-recall"]` node so 0.2.2+ never gets a duplicate.
 - `conversation.input.activity` is deliberately **not** used: DSH declares it as a single-occupant slot and already mounts its voice-input button there. Registering a second occupant evicts it and the whole starter fails with `web boot: 1 entry did not activate`, which drops DSH into recovery mode. Keep new controls in list slots such as `conversation.input.right`.
-- If a future host changes these contracts, adapt `lib/index.js`, `lib/optimize-host.js`, `src/client.js` and `src/optimize-button.js` (the changes are concentrated there).
+- If a future host changes these contracts, adapt `lib/index.js`, `lib/optimize-host.js`, `scripts/build-client.mjs` and the sources under `src/` (the changes are concentrated there).

@@ -181,9 +181,15 @@ function useReact() {
 function ensureStyle() {
   if (typeof document === 'undefined' || typeof document.getElementById !== 'function') return;
   if (typeof document.createElement !== 'function' || typeof document.head?.appendChild !== 'function') return;
+  // Hosts that read this bundle's `meta()` stylesheets (DSH >= 0.2.2) install these
+  // rules themselves under data-plugin; a second copy would duplicate every
+  // selector. Older hosts never produce such a node, so the manual injection below
+  // stays the only source there.
+  if (typeof document.querySelector === 'function' && document.querySelector('style[data-plugin="dsh-nonead-prompt-recall"]') != null) return;
   if (document.getElementById(STYLE_ID) !== null) return;
   const style = document.createElement('style');
   style.id = STYLE_ID;
+  if (typeof style.setAttribute === 'function') style.setAttribute('data-plugin', 'dsh-nonead-prompt-recall');
   style.textContent = `${CSS}\n${POLISH_CSS}`;
   document.head.appendChild(style);
 }
